@@ -78,11 +78,11 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
 ## 📌 Fase 3: Frontend Foundation & Design System (Spartan UI)
 > **Objetivo**: Configurar el núcleo del frontend Angular: cliente PocketBase reactivo, estado de sesión, Guards de rutas y componentes base de Spartan UI.
 
-- [ ] **3.1 Servicio PocketBase y Gestión de Autenticación**:
-  - [ ] Servicio Angular `AuthService` utilizando Signals (`currentUser`, `isAuthenticated`, `isAdmin`, `isPartner`).
-  - [ ] Sincronización del `authStore` de PocketBase con LocalStorage y estado reactivo.
-  - [ ] Implementación de `loginWithGoogle()` y manejo de errores de acceso denegado (no en lista blanca).
-  - [ ] `authGuard` y `roleGuard` funcionales en Angular Router.
+- [x] **3.1 Servicio PocketBase y Gestión de Autenticación**:
+  - [x] Servicio Angular `AuthService` utilizando Signals (`currentUser`, `isAuthenticated`, `isAdmin`, `isPartner`, `isLoading`, `authError`).
+  - [x] Sincronización del `authStore` de PocketBase con LocalStorage y estado reactivo (incluyendo sincronización multi-pestaña `storage` y `refreshSession`).
+  - [x] Implementación de `loginWithGoogle()` y manejo de errores de acceso denegado (rechazo 403 por hook de lista blanca o cuenta desactivada).
+  - [x] `authGuard`, `unauthGuard` y `roleGuard` (`hasRoleGuard`) funcionales en Angular Router con suite de pruebas unitarias al 100%.
 - [ ] **3.2 Layout Principal y Spartan Shell**:
   - [ ] Barra de navegación superior / lateral con indicador de usuario, avatar, badge de rol y botón de logout.
   - [ ] Modo Oscuro / Claro implementado con tokens semánticos de Spartan UI.

@@ -1,0 +1,21 @@
+<div class="login-container">
+  <h1>Iniciar Sesión - Rey del Arrecife</h1>
+  <p>Accede con tu cuenta institucional o autorizada de Google.</p>
+  @if (authService.authError()) {
+    <div class="error-banner" role="alert">
+      {{ authService.authError() }}
+    </div>
+  }
+  <button
+    type="button"
+    class="google-login-btn"
+    [disabled]="authService.isLoading()"
+    (click)="onLoginWithGoogle()"
+  >
+    @if (authService.isLoading()) {
+      <span>Conectando...</span>
+    } @else {
+      <span>Acceder con Google</span>
+    }
+  </button>
+</div>

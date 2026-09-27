@@ -12,7 +12,7 @@
         "@schematics/angular:component": {
           "inlineTemplate": false,
           "inlineStyle": false,
-          "style": "css"
+          "style": "scss"
         }
       },
       "root": "",
@@ -31,7 +31,7 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles.scss"
             ]
           },
           "configurations": {
