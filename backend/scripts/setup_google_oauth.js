@@ -2,6 +2,12 @@ import PocketBase from 'pocketbase';
 
 const PB_URL = process.env.PB_URL || 'http://localhost:8090';
 const ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL || 'admin@reydelarrecife.local';
+
+if (process.env.NODE_ENV === 'production' && !process.env.PB_ADMIN_PASSWORD) {
+    console.error('❌ ERROR FATAL DE SEGURIDAD: La variable PB_ADMIN_PASSWORD es obligatoria en entornos de producción.');
+    process.exit(1);
+}
+
 const ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD || 'ReyDelArrecife2026!';
 
 const clientId = process.argv[2] || process.env.GOOGLE_CLIENT_ID;

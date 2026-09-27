@@ -9,6 +9,12 @@ const __dirname = path.dirname(__filename);
 
 const PB_URL = process.env.PB_URL || 'http://localhost:8090';
 const ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL || 'admin@reydelarrecife.local';
+
+if (process.env.NODE_ENV === 'production' && !process.env.PB_ADMIN_PASSWORD) {
+    console.error('❌ ERROR FATAL DE SEGURIDAD: La variable PB_ADMIN_PASSWORD es obligatoria en entornos de producción.');
+    process.exit(1);
+}
+
 const ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD || 'ReyDelArrecife2026!';
 
 const pb = new PocketBase(PB_URL);
@@ -69,9 +75,28 @@ async function ensureSchema() {
         });
         usersModified = true;
     }
+    const targetCreateRule = '@request.auth.role = "admin"';
+    const targetListRule = '@request.auth.role = "admin" || id = @request.auth.id';
+    const targetViewRule = '@request.auth.role = "admin" || id = @request.auth.id';
+    const targetUpdateRule = '@request.auth.role = "admin" || id = @request.auth.id';
+    const targetDeleteRule = '@request.auth.role = "admin"';
+
+    if (usersColl.createRule !== targetCreateRule ||
+        usersColl.listRule !== targetListRule ||
+        usersColl.viewRule !== targetViewRule ||
+        usersColl.updateRule !== targetUpdateRule ||
+        usersColl.deleteRule !== targetDeleteRule) {
+        usersColl.createRule = targetCreateRule;
+        usersColl.listRule = targetListRule;
+        usersColl.viewRule = targetViewRule;
+        usersColl.updateRule = targetUpdateRule;
+        usersColl.deleteRule = targetDeleteRule;
+        usersModified = true;
+    }
+
     if (usersModified) {
         await pb.collections.update('users', usersColl);
-        console.log('✅ Colección `users` actualizada con campos role y active.');
+        console.log('✅ Colección `users` actualizada con campos role, active y reglas de acceso seguras.');
     }
 
     // 2. inventario
