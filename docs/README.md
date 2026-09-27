@@ -5,17 +5,19 @@ A diferencia de la documentación estática, estos documentos deben evolucionar 
 
 ## 🧭 Índice de Documentos
 
-1. [Arquitectura del Sistema](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/ARCHITECTURE.md)
+1. [Plan de Implementación Integral (Roadmap)](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/IMPLEMENTATION_PLAN.md)
+   - Mapa de ruta vivo del proyecto: fases, tareas granulares y seguimiento de estado.
+2. [Arquitectura del Sistema](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/ARCHITECTURE.md)
    - Topología general, contenedores, flujo de peticiones, red y puertos.
-2. [Modelo de Datos](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/DATA_MODEL.md)
+3. [Modelo de Datos](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/DATA_MODEL.md)
    - Esquemas de Pocketbase: `inventario`, `gastos_extra`, `users`. Tipos, relaciones y reglas.
-3. [Matriz de Permisos (RBAC)](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/PERMISSIONS_MATRIX.md)
+4. [Matriz de Permisos (RBAC)](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/PERMISSIONS_MATRIX.md)
    - Detalle de capacidades y restricciones para `admin` vs `partner`.
-4. [Guía de Despliegue en Synology](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/DEPLOYMENT_SYNOLOGY.md)
+5. [Guía de Despliegue en Synology](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/DEPLOYMENT_SYNOLOGY.md)
    - Configuración en Synology Container Manager (Proyecto Docker Compose), volúmenes persistentes y Reverse Proxy.
-5. [Guía de Desarrollo Local](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/DEVELOPMENT_GUIDE.md)
+6. [Guía de Desarrollo Local](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/DEVELOPMENT_GUIDE.md)
    - Flujo de trabajo híbrido (Pocketbase en Docker + Angular en host), comandos, seed inicial y pruebas.
-6. [Registro de Decisiones Arquitectónicas (ADRs)](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/decisions/)
+7. [Registro de Decisiones Arquitectónicas (ADRs)](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/decisions/)
    - Historial inmutable de las decisiones técnicas clave tomadas en el proyecto.
 
 ## 🔄 Reglas de Mantenimiento de Living Docs
