@@ -164,11 +164,35 @@ export class AuthService {
         };
       }
 
+      const rawMsg = String(clientErr?.response?.['message'] || clientErr?.message || '');
+
+      // Proveedor no configurado o no soportado en PocketBase
+      if (rawMsg.includes('not supported') || rawMsg.includes('Missing provider')) {
+        const configMsg =
+          'El proveedor de Google OAuth no está configurado en el servidor. Configura GOOGLE_CLIENT_ID en PocketBase o accede con usuario y contraseña.';
+        this._authError.set(configMsg);
+        return {
+          success: false,
+          error: configMsg,
+        };
+      }
+
+      // Ventana emergente bloqueada por el navegador
+      if (rawMsg.toLowerCase().includes('popup') || rawMsg.toLowerCase().includes('blocked')) {
+        const popupMsg =
+          'La ventana emergente de Google fue bloqueada por el navegador. Habilita las ventanas emergentes para continuar.';
+        this._authError.set(popupMsg);
+        return {
+          success: false,
+          error: popupMsg,
+        };
+      }
+
       // Cualquier otro error de red, configuración o servidor
       const genericMsg =
         clientErr?.response?.['message'] ||
         clientErr?.message ||
-        'Error inesperado al iniciar sesión con Google. Inténtalo de nuevo más tarde.';
+        'Error inesperado al iniciar sesión con Google. Inténtalo de nuevo más tarde o usa usuario y contraseña.';
       this._authError.set(genericMsg);
 
       return {

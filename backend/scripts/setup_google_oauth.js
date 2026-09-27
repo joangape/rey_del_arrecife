@@ -1,4 +1,33 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import PocketBase from 'pocketbase';
+
+// Intentar cargar variables desde .env si existe
+function loadEnvFile() {
+    const candidates = [
+        path.resolve(process.cwd(), '.env'),
+        path.resolve(process.cwd(), '../.env'),
+        path.resolve(process.cwd(), 'backend/.env'),
+    ];
+    for (const file of candidates) {
+        if (fs.existsSync(file)) {
+            const lines = fs.readFileSync(file, 'utf-8').split('\n');
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+                    const [k, ...v] = trimmed.split('=');
+                    const key = k.trim();
+                    const val = v.join('=').trim().replace(/^["']|["']$/g, '');
+                    if (!process.env[key] && val) {
+                        process.env[key] = val;
+                    }
+                }
+            }
+            break;
+        }
+    }
+}
+loadEnvFile();
 
 const PB_URL = process.env.PB_URL || 'http://localhost:8090';
 const ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL || 'admin@reydelarrecife.local';
@@ -10,8 +39,15 @@ if (process.env.NODE_ENV === 'production' && !process.env.PB_ADMIN_PASSWORD) {
 
 const ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD || 'ReyDelArrecife2026!';
 
-const clientId = process.argv[2] || process.env.GOOGLE_CLIENT_ID;
-const clientSecret = process.argv[3] || process.env.GOOGLE_CLIENT_SECRET;
+const isDevFlag = process.argv.includes('--dev');
+let clientId = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : process.env.GOOGLE_CLIENT_ID;
+let clientSecret = process.argv[3] && !process.argv[3].startsWith('--') ? process.argv[3] : process.env.GOOGLE_CLIENT_SECRET;
+
+if (isDevFlag && (!clientId || !clientSecret)) {
+    clientId = 'dev-local.apps.googleusercontent.com';
+    clientSecret = 'dev-local-secret-2026';
+    console.log('🧪 Modo desarrollo activado: utilizando credenciales placeholder de prueba.');
+}
 
 async function main() {
     const pb = new PocketBase(PB_URL);

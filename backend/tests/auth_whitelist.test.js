@@ -58,19 +58,20 @@ async function runTests() {
     await adminPb.collection('_superusers').authWithPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
     console.log('🔑 Superuser autenticado exitosamente.');
 
-    // 2. Configurar proveedor OIDC temporal en PocketBase
+    // 2. Configurar proveedor OIDC temporal en PocketBase preservando proveedores existentes
     const usersColl = await adminPb.collections.getOne('users');
-    const originalOauth2Config = JSON.parse(JSON.stringify(usersColl.oauth2 || {}));
+    const existingProviders = (usersColl.oauth2?.providers || []).filter((p) => p.name !== 'oidc');
 
     const testOauth2Config = {
         enabled: true,
-        mappedFields: {
+        mappedFields: usersColl.oauth2?.mappedFields || {
             id: '',
             name: 'name',
             username: '',
             avatarURL: 'avatar',
         },
         providers: [
+            ...existingProviders,
             {
                 name: 'oidc',
                 clientId: 'test-client-id',
@@ -259,7 +260,19 @@ async function runTests() {
     await cleanupTestUser(testEmailUnauthorized);
     await cleanupTestUser(testEmailInactive);
     await cleanupTestUser(testEmailActive);
-    await adminPb.collections.update('users', { oauth2: originalOauth2Config });
+    // Restaurar eliminando el proveedor temporal 'oidc'
+    try {
+        const currentColl = await adminPb.collections.getOne('users');
+        const restoredProviders = (currentColl.oauth2?.providers || []).filter((p) => p.name !== 'oidc');
+        await adminPb.collections.update('users', {
+            oauth2: {
+                ...currentColl.oauth2,
+                providers: restoredProviders,
+            },
+        });
+    } catch (e) {
+        console.warn('Advertencia restaurando providers:', e.message);
+    }
 
     await new Promise((resolve) => mockServer.close(resolve));
     console.log('🏁 Servidor mock cerrado y configuración restaurada.');

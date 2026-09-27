@@ -280,8 +280,44 @@ async function main() {
             } catch (err) {
                 console.error(`⚠️ Error guardando gasto para ref ${refPieza}:`, err.message);
             }
-        }
         console.log(`✅ Gastos extra migrados: ${gastosGuardados} registros procesados.`);
+    }
+
+    // Asegurar usuarios iniciales de desarrollo en la colección 'users'
+    console.log('👥 Asegurando cuentas de usuario iniciales en PocketBase...');
+    const defaultUsers = [
+        {
+            email: 'admin@reydelarrecife.local',
+            password: 'Password2026!',
+            name: 'Administrador Demo',
+            role: 'admin',
+            active: true,
+        },
+        {
+            email: 'partner@reydelarrecife.local',
+            password: 'Password2026!',
+            name: 'Socio Demo',
+            role: 'partner',
+            active: true,
+        },
+    ];
+
+    for (const u of defaultUsers) {
+        try {
+            const existing = await pb.collection('users').getFirstListItem(`email = "${u.email}"`);
+            await pb.collection('users').update(existing.id, {
+                active: u.active,
+                role: u.role,
+                name: existing.name || u.name,
+            });
+        } catch {
+            await pb.collection('users').create({
+                ...u,
+                passwordConfirm: u.password,
+                emailVisibility: true,
+            });
+            console.log(`✨ Usuario creado: ${u.email} (${u.role})`);
+        }
     }
 
     console.log('🎉 Migración completada exitosamente.');
