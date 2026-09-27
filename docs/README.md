@@ -21,6 +21,8 @@ A diferencia de la documentación estática, estos documentos deben evolucionar 
    - Historial inmutable de las decisiones técnicas clave tomadas en el proyecto.
 8. [Informe de Revisión de Código y Calidad](file:///Users/josegarces/Coding_projects/rey_del_arrecife/CODE_REVIEW_REPORT.md)
    - Auditoría multi-eje del estado del repositorio, hallazgos de seguridad y plan de remediación.
+9. [Directrices de Diseño UI/UX y Sistema Visual](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/UI_UX_DESIGN_GUIDELINES.md)
+   - Guía oficial de UI/UX, tokens semánticos, componentes Spartan UI, App Shell y patrones de pantalla acordados.
 
 ## 🔄 Reglas de Mantenimiento de Living Docs
 
