@@ -4,7 +4,9 @@
   "description": "Backend PocketBase y scripts de soporte para Rey del Arrecife",
   "type": "module",
   "scripts": {
-    "seed": "node scripts/seed_csv.js"
+    "seed": "node scripts/seed_csv.js",
+    "test:auth": "node tests/auth_whitelist.test.js",
+    "oauth:google": "node scripts/setup_google_oauth.js"
   },
   "dependencies": {
     "csv-parse": "^5.5.6",

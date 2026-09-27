@@ -9,6 +9,7 @@
     "backend:down": "make backend-down",
     "backend:logs": "make backend-logs",
     "seed": "make seed",
+    "test:auth": "make test-auth",
     "frontend:install": "make frontend-install",
     "frontend:dev": "make frontend-dev",
     "build": "make build"

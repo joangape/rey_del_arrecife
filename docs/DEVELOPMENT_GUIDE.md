@@ -31,12 +31,17 @@ make backend-down
 # Importar y migrar los datos históricos de los CSV a PocketBase
 make seed
 
+# Ejecutar las pruebas de integración del hook de autenticación OAuth2 Whitelist
+make test-auth
+
 # Compilar frontend Angular para producción
 make build
 
 # Ver logs del contenedor backend
-make logs
+make backend-logs
 ```
+
+Para la configuración de Google Cloud y OAuth2, consulta la [Guía de Configuración de Google OAuth2](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/GOOGLE_OAUTH_SETUP.md).
 
 ---
 

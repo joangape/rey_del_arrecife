@@ -61,10 +61,10 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
   - [x] Colección `inventario` con validación de unicidad en `ref` y reglas de lectura/escritura según rol.
   - [x] Colección `gastos_extra` con clave foránea a `inventario` (`pieza`).
   - [x] Colección `users` extendida con campos `role` (`admin` / `partner`) y `active` (booleano).
-- [ ] **2.2 Hook de Lista Blanca OAuth2 (`auth_whitelist.pb.js`)**:
-  - [x] Código inicial del hook en `backend/pb_hooks/auth_whitelist.pb.js`.
-  - [ ] Pruebas de integración: verificar rechazo automático de cuentas Google no autorizadas previamente en `users`.
-  - [ ] Configuración del cliente OAuth2 de Google en la consola de Google Cloud (credenciales, client_id, secret y redirect URI).
+- [x] **2.2 Hook de Lista Blanca OAuth2 (`auth_whitelist.pb.js`)**:
+  - [x] Implementación y adaptación a PocketBase v0.40 en `backend/pb_hooks/auth_whitelist.pb.js`.
+  - [x] Pruebas de integración automatizadas (`make test-auth` / `backend/tests/auth_whitelist.test.js`) validando los 3 escenarios: rechazo de no invitados (403), rechazo de inactivos (403) y vinculación exitosa de activos.
+  - [x] Guía técnica completa y script de configuración de credenciales de Google OAuth2 en [GOOGLE_OAUTH_SETUP.md](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/GOOGLE_OAUTH_SETUP.md) y `backend/scripts/setup_google_oauth.js`.
 - [ ] **2.3 Hook de Protección de Campos de Inventario (`inventory_guard.pb.js`)**:
   - [ ] Garantizar a nivel de servidor que un usuario con rol `partner` no pueda alterar `costo`, `fecha_compra`, `origen` ni `ref`, aunque envíe un payload manipulado por API.
 - [ ] **2.4 Automatización de Migraciones (`pb_migrations/`)**:

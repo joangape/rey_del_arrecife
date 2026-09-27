@@ -3,7 +3,7 @@
 /**
  * Hook de seguridad: Whitelist de Google OAuth2.
  * Solo permite acceder mediante OAuth2 si el correo electrónico
- * ha sido pre-autorizado e introducido previamente por un Administrador.
+ * ha sido pre-autorizado e introducido previamente por un Administrador en la colección 'users'.
  */
 onRecordAuthWithOAuth2Request((e) => {
     const oAuthUser = e.oAuth2User;
@@ -13,33 +13,42 @@ onRecordAuthWithOAuth2Request((e) => {
 
     const email = oAuthUser.email.toLowerCase().trim();
 
+    let user;
     try {
-        // Buscar si el usuario ya existe en la colección de usuarios
-        const user = $app.dao().findAuthRecordByEmail("users", email);
-
-        if (!user) {
-            throw new ForbiddenError(
-                `El correo ${email} no ha sido invitado ni autorizado por un administrador.`
-            );
-        }
-
-        // Verificar que el usuario no esté deshabilitado
-        if (user.getBool("active") === false) {
-            throw new ForbiddenError("Esta cuenta ha sido desactivada temporalmente.");
-        }
-
-        // Asociar datos del perfil de Google si aún no están establecidos
-        if (!user.getString("name") && oAuthUser.name) {
-            user.set("name", oAuthUser.name);
-            $app.dao().saveRecord(user);
-        }
+        // En PocketBase v0.40, las consultas se ejecutan a través de la instancia transaccional e.app
+        user = e.app.findAuthRecordByEmail("users", email);
     } catch (err) {
-        if (err instanceof ForbiddenError) {
-            throw err;
-        }
-        // Si no se encuentra el usuario por email, findAuthRecordByEmail lanza error
         throw new ForbiddenError(
-            `El correo ${email} no tiene acceso autorizado a Rey del Arrecife.`
+            `El correo ${email} no ha sido invitado ni autorizado por un administrador.`
         );
     }
+
+    if (!user) {
+        throw new ForbiddenError(
+            `El correo ${email} no ha sido invitado ni autorizado por un administrador.`
+        );
+    }
+
+    // Verificar que el usuario no esté deshabilitado
+    if (user.getBool("active") === false) {
+        throw new ForbiddenError("Esta cuenta ha sido desactivada temporalmente.");
+    }
+
+    // Vincular explícitamente el record a este usuario existente para que PocketBase
+    // asocie la cuenta externa de Google con este usuario en lugar de intentar crear uno nuevo
+    e.record = user;
+
+    // Asociar datos del perfil de Google si aún no están establecidos
+    let needsSave = false;
+    if (!user.getString("name") && oAuthUser.name) {
+        user.set("name", oAuthUser.name);
+        needsSave = true;
+    }
+
+    if (needsSave) {
+        e.app.save(user);
+    }
+
+    // Continuar con la cadena de hooks de PocketBase
+    e.next();
 }, "users");

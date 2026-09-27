@@ -1,4 +1,4 @@
-.PHONY: help dev backend-up backend-down backend-logs seed frontend-install frontend-dev build clean
+.PHONY: help dev backend-up backend-down backend-logs seed test-auth frontend-install frontend-dev build clean
 
 # Colores de salida
 CYAN  := \033[36m
@@ -29,6 +29,10 @@ backend-logs: ## Muestra los logs en tiempo real del contenedor de PocketBase
 seed: ## Ejecuta la importación y migración de los datos de los CSV históricos
 	@echo "$(CYAN)Importando datos de CSVs a PocketBase...$(RESET)"
 	@cd backend && npm install && npm run seed
+
+test-auth: ## Ejecuta las pruebas de integración del hook de autenticación OAuth2
+	@echo "$(CYAN)Ejecutando pruebas de integración OAuth2 Whitelist...$(RESET)"
+	@cd backend && npm run test:auth
 
 frontend-install: ## Instala las dependencias del frontend Angular
 	@cd frontend && npm install
