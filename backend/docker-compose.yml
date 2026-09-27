@@ -10,5 +10,6 @@ services:
     volumes:
       - ./pb_data:/pb_data
       - ./pb_hooks:/pb_hooks:ro
+      - ./pb_migrations:/pb_migrations
     environment:
       - DEV_MODE=true

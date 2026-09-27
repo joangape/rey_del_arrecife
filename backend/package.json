@@ -9,7 +9,9 @@
     "test:guard": "node tests/inventory_guard.test.js",
     "test:users": "node tests/user_guard.test.js",
     "test": "node tests/auth_whitelist.test.js && node tests/inventory_guard.test.js && node tests/user_guard.test.js",
-    "oauth:google": "node scripts/setup_google_oauth.js"
+    "oauth:google": "node scripts/setup_google_oauth.js",
+    "migrate:up": "docker compose exec pocketbase pocketbase migrate up --dir=/pb_data --migrationsDir=/pb_migrations",
+    "migrate:snapshot": "docker compose exec -i pocketbase pocketbase migrate collections --dir=/pb_data --migrationsDir=/pb_migrations"
   },
   "dependencies": {
     "csv-parse": "^5.5.6",

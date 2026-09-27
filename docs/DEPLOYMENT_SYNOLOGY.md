@@ -25,6 +25,7 @@ En el File Station de tu Synology NAS, crea la siguiente estructura en la carpet
 ├── nginx.conf               # Copiado desde /deploy/nginx.conf
 ├── .env                     # Variables de entorno de producción
 ├── pb_hooks/                # Hooks JSVM copiados desde /deploy/pb_hooks/ (seguridad y whitelist)
+├── pb_migrations/           # Migraciones JSVM copiadas desde /deploy/pb_migrations/ (esquema automatizado)
 ├── pb_data/                 # Directorio de persistencia de PocketBase (se creará solo o con permisos)
 └── dist/                    # Build compilada de Angular (o montada en la imagen Docker)
 ```

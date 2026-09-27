@@ -30,6 +30,16 @@ seed: ## Ejecuta la importación y migración de los datos de los CSV histórico
 	@echo "$(CYAN)Importando datos de CSVs a PocketBase...$(RESET)"
 	@cd backend && npm install && npm run seed
 
+migrate: ## Ejecuta las migraciones de PocketBase pendientes
+	@echo "$(CYAN)Aplicando migraciones de PocketBase...$(RESET)"
+	@cd backend && npm run migrate:up
+
+migrate-snapshot: ## Exporta el esquema de colecciones a pb_migrations
+	@echo "$(CYAN)Exportando snapshot de colecciones a pb_migrations...$(RESET)"
+	@cd backend && npm run migrate:snapshot
+	@cp -r backend/pb_migrations/* deploy/pb_migrations/ 2>/dev/null || true
+	@echo "$(GREEN)Snapshot generado y sincronizado con deploy/pb_migrations.$(RESET)"
+
 test-auth: ## Ejecuta las pruebas de integración del hook de autenticación OAuth2
 	@echo "$(CYAN)Ejecutando pruebas de integración OAuth2 Whitelist...$(RESET)"
 	@cd backend && npm run test:auth

@@ -13,10 +13,10 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
 [Fase 2: Backend & Auth Security] 🔄 EN CURSO / BASE LISTA
                │
                ▼
-[Fase 3: Frontend Foundation & Design System (Spartan UI)]
+[Fase 3: Frontend Foundation & Design System (Spartan UI)] ✅ COMPLETADO
                │
                ▼
-[Fase 4: Módulo de Inventario (Catálogo & Ficha Comercial)]
+[Fase 4: Módulo de Inventario (Catálogo & Ficha Comercial)] 🔄 SIGUIENTE ENFOQUE
                │
                ▼
 [Fase 5: Módulo de Gastos Extra & Liquidaciones]
@@ -70,8 +70,11 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
   - [x] Bloqueo a nivel de hook de operaciones de creación (`onRecordCreateRequest`) y eliminación (`onRecordDeleteRequest`) para usuarios no administradores.
   - [x] Tolerancia ante envíos de datos completos desde el cliente siempre que los campos protegidos no hayan sido alterados respecto al registro en base de datos.
   - [x] Suite de pruebas automatizadas de integración (`make test-guard` / `backend/tests/inventory_guard.test.js`) con 14 casos de prueba cubriendo roles `admin`, `partner` y llamadas anónimas.
-- [ ] **2.4 Automatización de Migraciones (`pb_migrations/`)**:
-  - [ ] Exportar el esquema actual a ficheros `.js` de migración PocketBase para despliegue automatizado sin necesidad de correr scripts manuales.
+- [x] **2.4 Automatización de Migraciones (`pb_migrations/`)**:
+  - [x] Esquema consolidado y unificado en 1 fichero maestro (`1790541647_initial_schema.js`) en `backend/pb_migrations/` y `deploy/pb_migrations/`.
+  - [x] Configuración de volumen persistente y flags `--migrationsDir=/pb_migrations` en `backend/docker-compose.yml`, `backend/Dockerfile` y `deploy/docker-compose.yml`.
+  - [x] Comandos de orquestación en `Makefile` (`make migrate`, `make migrate-snapshot`) y `backend/package.json` (`npm run migrate:up`, `npm run migrate:snapshot`).
+  - [x] Validación exitosa de inicialización y migración completa desde cero en base de datos limpia.
 
 ---
 
@@ -83,13 +86,18 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
   - [x] Sincronización del `authStore` de PocketBase con LocalStorage y estado reactivo (incluyendo sincronización multi-pestaña `storage` y `refreshSession`).
   - [x] Implementación de `loginWithGoogle()` y manejo de errores de acceso denegado (rechazo 403 por hook de lista blanca o cuenta desactivada).
   - [x] `authGuard`, `unauthGuard` y `roleGuard` (`hasRoleGuard`) funcionales en Angular Router con suite de pruebas unitarias al 100%.
-- [ ] **3.2 Layout Principal y Spartan Shell**:
-  - [ ] Barra de navegación superior / lateral con indicador de usuario, avatar, badge de rol y botón de logout.
-  - [ ] Modo Oscuro / Claro implementado con tokens semánticos de Spartan UI.
-  - [ ] Componentes Helm necesarios añadidos vía `@spartan-ng/cli:ui` (`button`, `dialog`, `table`, `input`, `badge`, `card`, `dropdown-menu`, `toast`).
-- [ ] **3.3 Pantalla de Login (`/login`)**:
-  - [ ] Diseño estético y profesional con botón de acceso mediante Google OAuth.
-  - [ ] Mensajes amigables en caso de cuenta no invitada o desactivada.
+- [x] **3.2 Layout Principal y Spartan Shell**:
+  - [x] Barra de navegación superior (`HeaderComponent`) fija con buscador predictivo (`⌘K`), título contextual de sección, conmutador de tema claro/oscuro y perfil de usuario con badge de rol.
+  - [x] Barra de navegación lateral (`SidebarComponent`) colapsable (260px expandido / 72px modo iconos) con logo coral bioluminiscente, indicador activo lateral, badge de rol (`👑 Admin` oro / `🐠 Socio` cian) y logout con confirmación `HlmAlertDialog`.
+  - [x] Navegación táctil para móviles (`BottomNavComponent`) fija en la parte inferior (< 1024px) y panel lateral deslizable (`Mobile Drawer`) con backdrop desenfocado.
+  - [x] Modo Oscuro por defecto (*Deep Marine*) y Claro (*Clean Marine*) gestionado reactivamente por `ThemeService` con persistencia en `localStorage`.
+  - [x] Generación de primitives Spartan UI en `src/app/shared/ui/`: `button`, `badge`, `dialog`, `alert-dialog`, `input`, `switch`, `sonner`, `table`, `tooltip`.
+  - [x] Configuración de PostCSS (`@tailwindcss/postcss`, `.postcssrc.json`) para compilación completa de utilidades de Tailwind CSS v4 con Angular CLI.
+  - [x] Verificación visual y funcional completa en navegador automatizado (Playwright).
+- [x] **3.3 Pantalla de Login (`/login`)**:
+  - [x] Diseño estético y profesional con soporte para inicio de sesión con Google OAuth2 y contraseña de desarrollo.
+  - [x] Manejo reactivo de errores (rechazo por lista blanca, cuenta desactivada, cancelación de popup).
+  - [x] Redirección automática tras autenticación hacia `/inventario` o ruta previa solicitada (`returnUrl`).
 
 ---
 
