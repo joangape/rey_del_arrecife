@@ -1,0 +1,25 @@
+{
+  "name": "rey-del-arrecife",
+  "version": "1.0.0",
+  "description": "Plataforma de gestión de inventario para Rey del Arrecife",
+  "private": true,
+  "scripts": {
+    "dev": "make dev",
+    "backend:up": "make backend-up",
+    "backend:down": "make backend-down",
+    "backend:logs": "make backend-logs",
+    "seed": "make seed",
+    "frontend:install": "make frontend-install",
+    "frontend:dev": "make frontend-dev",
+    "build": "make build"
+  },
+  "keywords": [
+    "angular",
+    "pocketbase",
+    "spartan-ui",
+    "synology",
+    "inventory"
+  ],
+  "author": "Rey del Arrecife sevillano SL",
+  "license": "UNLICENSED"
+}

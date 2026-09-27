@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "angular-component": {
+      "source": "analogjs/angular-skills",
+      "sourceType": "github",
+      "skillPath": "skills/angular-component/SKILL.md",
+      "computedHash": "fa1049900beb037dd5afddd0dc6059aed588bfa1e11cc3a96f76bd90a0a6b0d8"
+    },
+    "angular-signals": {
+      "source": "analogjs/angular-skills",
+      "sourceType": "github",
+      "skillPath": "skills/angular-signals/SKILL.md",
+      "computedHash": "abab334ccceb7845ed6ef6ad9b67eb64cf41678f41b27671ccdad1d1e99c46f7"
+    },
+    "pocketbase-best-practices": {
+      "source": "greendesertsnow/pocketbase-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pocketbase-best-practices/SKILL.md",
+      "computedHash": "38ba2d4cc03f55ef4340f1341baaefc6694aded18729972034a9263f0d6b9e4d"
+    },
+    "spartan": {
+      "source": "spartan-ng/spartan",
+      "sourceType": "github",
+      "skillPath": "skills/spartan/SKILL.md",
+      "computedHash": "630526f27a77606e74122b1a3fd6fb41be2f7d5b63d13df9d7af3732c562edab"
+    }
+  }
+}

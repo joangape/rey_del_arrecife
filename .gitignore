@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Angular build & cache
+.angular/
+dist/
+/frontend/.angular/
+/frontend/dist/
+
+# PocketBase local database & uploads (never commit real customer data)
+pb_data/
+backend/pb_data/
+deploy/pb_data/
+
+# Environment files
+.env
+.env.local
+deploy/.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp

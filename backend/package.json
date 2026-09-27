@@ -1,0 +1,13 @@
+{
+  "name": "rey-del-arrecife-backend",
+  "version": "1.0.0",
+  "description": "Backend PocketBase y scripts de soporte para Rey del Arrecife",
+  "type": "module",
+  "scripts": {
+    "seed": "node scripts/seed_csv.js"
+  },
+  "dependencies": {
+    "csv-parse": "^5.5.6",
+    "pocketbase": "^0.21.5"
+  }
+}
