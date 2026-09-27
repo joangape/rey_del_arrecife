@@ -1,3 +1,36 @@
-<article class="inventario-detail-view">
-  <h2>Detalle de Pieza</h2>
+<article class="space-y-6">
+  <div class="flex items-center gap-3">
+    <a
+      routerLink="/inventario"
+      class="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+    >
+      ← Volver al Inventario
+    </a>
+  </div>
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border/60">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">Ficha de Detalle de Pieza</h1>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+          Placeholder
+        </span>
+      </div>
+      <p class="text-sm text-muted-foreground mt-1">
+        Ficha técnica, galería de fotografías, desglose financiero y gastos vinculados.
+      </p>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center flex flex-col items-center justify-center space-y-4">
+    <div class="size-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-2xl glow-cyan">
+      💎
+    </div>
+    <div class="max-w-md space-y-2">
+      <h3 class="text-lg font-semibold text-foreground">Detalle de Pieza en Preparación</h3>
+      <p class="text-sm text-muted-foreground leading-relaxed">
+        Este panel integrará la vista partida (galería de imágenes PocketBase a la izquierda y ficha financiera con validaciones RBAC a la derecha).
+      </p>
+    </div>
+  </div>
 </article>

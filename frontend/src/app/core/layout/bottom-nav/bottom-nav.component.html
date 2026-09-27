@@ -1,0 +1,59 @@
+<nav class="app-bottom-nav lg:hidden fixed bottom-0 left-0 right-0 z-30 h-16 bg-card/90 backdrop-blur-lg border-t border-border flex items-center justify-around px-2 pb-safe shadow-lg">
+  <!-- Inventario -->
+  <a
+    id="mobile-nav-inventario"
+    routerLink="/inventario"
+    routerLinkActive="active-tab"
+    class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-muted-foreground hover:text-foreground transition-colors group"
+  >
+    <div class="icon-wrap relative flex items-center justify-center">
+      <ng-icon name="lucidePackage" size="20" class="transition-transform group-hover:scale-110" />
+      <span class="active-dot absolute -top-1 right-0 size-1.5 rounded-full bg-primary opacity-0 transition-opacity"></span>
+    </div>
+    <span class="text-[11px] font-medium tracking-tight mt-1">Inventario</span>
+  </a>
+
+  <!-- Gastos Extra -->
+  <a
+    id="mobile-nav-gastos"
+    routerLink="/gastos"
+    routerLinkActive="active-tab"
+    class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-muted-foreground hover:text-foreground transition-colors group"
+  >
+    <div class="icon-wrap relative flex items-center justify-center">
+      <ng-icon name="lucideReceipt" size="20" class="transition-transform group-hover:scale-110" />
+      <span class="active-dot absolute -top-1 right-0 size-1.5 rounded-full bg-primary opacity-0 transition-opacity"></span>
+    </div>
+    <span class="text-[11px] font-medium tracking-tight mt-1">Gastos</span>
+  </a>
+
+  <!-- Usuarios (Solo Admin) -->
+  @if (isAdmin()) {
+    <a
+      id="mobile-nav-usuarios"
+      routerLink="/admin/usuarios"
+      routerLinkActive="active-tab"
+      class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-muted-foreground hover:text-foreground transition-colors group"
+    >
+      <div class="icon-wrap relative flex items-center justify-center">
+        <ng-icon name="lucideUsers" size="20" class="transition-transform group-hover:scale-110" />
+        <span class="active-dot absolute -top-1 right-0 size-1.5 rounded-full bg-primary opacity-0 transition-opacity"></span>
+      </div>
+      <span class="text-[11px] font-medium tracking-tight mt-1">Usuarios</span>
+    </a>
+  }
+
+  <!-- Perfil / Menú Drawer -->
+  <button
+    id="mobile-nav-menu"
+    type="button"
+    class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-muted-foreground hover:text-foreground transition-colors group"
+    (click)="layoutState.toggleMobileDrawer()"
+    aria-label="Abrir panel lateral"
+  >
+    <div class="icon-wrap relative flex items-center justify-center">
+      <ng-icon name="lucideMenu" size="20" class="transition-transform group-hover:scale-110" />
+    </div>
+    <span class="text-[11px] font-medium tracking-tight mt-1">Más</span>
+  </button>
+</nav>

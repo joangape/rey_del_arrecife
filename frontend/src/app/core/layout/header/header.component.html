@@ -1,0 +1,147 @@
+<header class="app-header flex items-center justify-between px-4 lg:px-6 h-16 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-30 transition-colors">
+  <!-- Izquierda: Botón Menú Móvil / Toggle Sidebar y Título de Sección -->
+  <div class="flex items-center gap-3">
+    <!-- Botón Drawer en móvil -->
+    <button
+      id="btn-mobile-menu-toggle"
+      hlmBtn
+      variant="ghost"
+      size="icon"
+      class="lg:hidden text-muted-foreground hover:text-foreground"
+      (click)="layoutState.toggleMobileDrawer()"
+      aria-label="Abrir navegación lateral"
+    >
+      <ng-icon [name]="layoutState.isMobileDrawerOpen() ? 'lucideX' : 'lucideMenu'" size="20" />
+    </button>
+
+    <!-- Botón colapsar sidebar en Desktop -->
+    <button
+      id="btn-desktop-sidebar-toggle"
+      hlmBtn
+      variant="ghost"
+      size="icon"
+      class="hidden lg:inline-flex text-muted-foreground hover:text-foreground"
+      (click)="layoutState.toggleSidebar()"
+      [attr.aria-label]="layoutState.isSidebarCollapsed() ? 'Expandir barra lateral' : 'Colapsar barra lateral'"
+    >
+      <ng-icon [name]="layoutState.isSidebarCollapsed() ? 'lucidePanelLeftOpen' : 'lucidePanelLeftClose'" size="20" />
+    </button>
+
+    <!-- Logo / Marca en móvil -->
+    <a routerLink="/inventario" class="flex lg:hidden items-center gap-2 font-semibold text-foreground tracking-tight">
+      <div class="size-7 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary glow-cyan">
+        <span class="text-sm">🪸</span>
+      </div>
+      <span class="text-sm font-bold bg-gradient-to-r from-primary to-cyan-300 bg-clip-text text-transparent">Rey del Arrecife</span>
+    </a>
+
+    <!-- Título de Sección activo en Desktop -->
+    <div class="hidden lg:flex items-center gap-2 text-sm">
+      <span class="text-muted-foreground">Plataforma</span>
+      <span class="text-muted-foreground/60">/</span>
+      <span class="font-medium text-foreground tracking-tight">{{ currentSectionTitle() }}</span>
+    </div>
+  </div>
+
+  <!-- Centro: Buscador Global Predictivo -->
+  <div class="hidden md:flex items-center flex-1 max-w-md mx-6">
+    <div class="relative w-full">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+        <ng-icon name="lucideSearch" size="16" />
+      </div>
+      <input
+        id="global-search-input"
+        type="text"
+        placeholder="Buscar por ref, pieza, origen..."
+        class="w-full pl-9 pr-14 py-1.5 text-sm bg-muted/40 hover:bg-muted/60 focus:bg-background border border-border/80 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+        [value]="layoutState.searchQuery()"
+        (input)="onSearchInput($event)"
+      />
+      <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+        <kbd class="px-1.5 py-0.5 text-[10px] font-mono font-medium text-muted-foreground bg-background/80 border border-border rounded shadow-xs">
+          ⌘K
+        </kbd>
+      </div>
+    </div>
+  </div>
+
+  <!-- Derecha: Acciones, Switch de Tema y Perfil -->
+  <div class="flex items-center gap-2 sm:gap-3">
+    <!-- Conmutador Claro / Oscuro -->
+    <button
+      id="btn-theme-toggle-header"
+      hlmBtn
+      variant="ghost"
+      size="icon"
+      class="text-muted-foreground hover:text-foreground rounded-lg"
+      (click)="themeService.toggleTheme()"
+      [attr.aria-label]="themeService.isDark() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+    >
+      @if (themeService.isDark()) {
+        <ng-icon name="lucideSun" size="18" class="text-amber-400 hover:rotate-45 transition-transform" />
+      } @else {
+        <ng-icon name="lucideMoon" size="18" class="text-primary hover:-rotate-12 transition-transform" />
+      }
+    </button>
+
+    <!-- Información de Usuario & Badge de Rol -->
+    @if (authService.currentUser(); as user) {
+      <div class="flex items-center gap-2.5 pl-2 border-l border-border/60">
+        <!-- Avatar -->
+        <div class="size-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center font-semibold text-xs text-primary shadow-xs">
+          {{ userInitials() }}
+        </div>
+
+        <!-- Nombre y Badge en Desktop -->
+        <div class="hidden sm:flex flex-col text-left">
+          <span class="text-xs font-medium text-foreground leading-tight truncate max-w-[120px]">
+            {{ user.name || user.email }}
+          </span>
+          <div class="flex items-center mt-0.5">
+            @if (user.role === 'admin') {
+              <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/30">
+                <ng-icon name="lucideCrown" size="10" />
+                Admin
+              </span>
+            } @else {
+              <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/30">
+                <ng-icon name="lucideShieldCheck" size="10" />
+                Socio
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Botón de Logout con Confirmación -->
+        <hlm-alert-dialog>
+          <button
+            id="btn-logout-header"
+            hlmBtn
+            hlmAlertDialogTrigger
+            variant="ghost"
+            size="icon"
+            class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg ml-1"
+            aria-label="Cerrar sesión"
+          >
+            <ng-icon name="lucideLogOut" size="18" />
+          </button>
+
+          <hlm-alert-dialog-content *hlmAlertDialogPortal class="sm:max-w-[400px]">
+            <hlm-alert-dialog-header>
+              <h2 hlmAlertDialogTitle>¿Cerrar sesión?</h2>
+              <p hlmAlertDialogDescription>
+                Se cerrará la sesión activa para <strong>{{ user.email }}</strong>. ¿Deseas salir del sistema?
+              </p>
+            </hlm-alert-dialog-header>
+            <hlm-alert-dialog-footer>
+              <button hlmBtn variant="outline" hlmAlertDialogCancel>Cancelar</button>
+              <button hlmBtn variant="destructive" hlmAlertDialogAction (click)="confirmLogout()">
+                Salir
+              </button>
+            </hlm-alert-dialog-footer>
+          </hlm-alert-dialog-content>
+        </hlm-alert-dialog>
+      </div>
+    }
+  </div>
+</header>

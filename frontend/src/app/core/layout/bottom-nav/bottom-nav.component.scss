@@ -1,0 +1,13 @@
+:host {
+  display: block;
+}
+
+.nav-tab {
+  &.active-tab {
+    color: var(--primary);
+
+    .active-dot {
+      opacity: 1;
+    }
+  }
+}

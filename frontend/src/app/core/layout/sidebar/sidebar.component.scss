@@ -1,0 +1,31 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.app-sidebar {
+  width: 260px;
+
+  &.collapsed {
+    width: 72px;
+  }
+}
+
+.nav-link {
+  color: var(--muted-foreground);
+
+  &:hover {
+    color: var(--foreground);
+    background-color: color-mix(in oklch, var(--muted) 40%, transparent);
+  }
+
+  &.active-nav-link {
+    color: var(--primary);
+    background-color: color-mix(in oklch, var(--primary) 12%, transparent);
+    font-weight: 600;
+
+    .active-indicator {
+      opacity: 1;
+    }
+  }
+}

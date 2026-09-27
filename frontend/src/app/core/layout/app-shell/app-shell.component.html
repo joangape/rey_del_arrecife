@@ -1,0 +1,43 @@
+<div class="app-layout flex h-screen w-full overflow-hidden bg-background text-foreground">
+  <!-- Sidebar en Desktop (>= 1024px) -->
+  <div class="hidden lg:block h-full shrink-0">
+    <app-sidebar />
+  </div>
+
+  <!-- Drawer Móvil con Backdrop (< 1024px) -->
+  @if (layoutState.isMobileDrawerOpen()) {
+    <div
+      class="mobile-backdrop fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity"
+      (click)="layoutState.closeMobileDrawer()"
+      aria-hidden="true"
+    ></div>
+
+    <div
+      class="mobile-drawer fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] h-full shadow-2xl lg:hidden transform transition-transform duration-300 ease-in-out"
+    >
+      <app-sidebar />
+    </div>
+  }
+
+  <!-- Área de Contenido Principal -->
+  <div class="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
+    <!-- Header Superior -->
+    <app-header />
+
+    <!-- Contenedor con Scroll del Router Outlet -->
+    <main
+      id="main-app-content"
+      class="main-content flex-1 overflow-y-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 pb-24 lg:pb-8 transition-all"
+    >
+      <div class="mx-auto max-w-7xl w-full">
+        <router-outlet />
+      </div>
+    </main>
+
+    <!-- Barra de Navegación Inferior (Móvil) -->
+    <app-bottom-nav />
+  </div>
+
+  <!-- Contenedor Toaster Spartan Sonner -->
+  <hlm-toaster />
+</div>
