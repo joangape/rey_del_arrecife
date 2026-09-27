@@ -8,6 +8,6 @@
   },
   "dependencies": {
     "csv-parse": "^5.5.6",
-    "pocketbase": "^0.21.5"
+    "pocketbase": "^0.28.1"
   }
 }

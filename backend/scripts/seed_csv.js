@@ -33,40 +33,140 @@ function parseDate(val) {
     if (parts.length === 3) {
         const day = parts[0].padStart(2, '0');
         const month = parts[1].padStart(2, '0');
-        let year = parts[2];
+        let year = parts[2].trim();
         if (year.length === 2) {
             year = parseInt(year, 10) > 50 ? `19${year}` : `20${year}`;
         }
-        return `${year}-${month}-${day} 00:00:00.000Z`;
+        if (year.length === 4) {
+            return `${year}-${month}-${day} 00:00:00.000Z`;
+        }
     }
     return null;
+}
+
+async function ensureSchema() {
+    console.log('🛠️ Verificando y configurando esquemas en PocketBase...');
+
+    // 1. users: role y active
+    const usersColl = await pb.collections.getOne('users');
+    const existingUserFields = usersColl.fields.map(f => f.name);
+    let usersModified = false;
+    if (!existingUserFields.includes('role')) {
+        usersColl.fields.push({
+            name: 'role',
+            type: 'select',
+            maxSelect: 1,
+            values: ['admin', 'partner'],
+            required: false,
+        });
+        usersModified = true;
+    }
+    if (!existingUserFields.includes('active')) {
+        usersColl.fields.push({
+            name: 'active',
+            type: 'bool',
+            required: false,
+        });
+        usersModified = true;
+    }
+    if (usersModified) {
+        await pb.collections.update('users', usersColl);
+        console.log('✅ Colección `users` actualizada con campos role y active.');
+    }
+
+    // 2. inventario
+    let inv = await pb.collections.getOne('inventario').catch(() => null);
+    if (!inv) {
+        inv = await pb.collections.create({
+            name: 'inventario',
+            type: 'base',
+            fields: [
+                { name: 'ref', type: 'number', required: true },
+                { name: 'descripcion', type: 'text', required: false },
+                { name: 'origen', type: 'text', required: false },
+                { name: 'fecha_compra', type: 'date', required: false },
+                { name: 'costo', type: 'number', required: false },
+                { name: 'gastos_total', type: 'number', required: false },
+                { name: 'a_pagar', type: 'number', required: false },
+                { name: 'pvp', type: 'number', required: false },
+                { name: 'fecha_venta', type: 'text', required: false },
+                { name: 'fecha_pagado', type: 'text', required: false },
+                { name: 'estado', type: 'text', required: false },
+                { name: 'foto_url', type: 'url', required: false },
+                { name: 'fotos', type: 'file', maxSelect: 10, required: false },
+                { name: 'comentarios', type: 'text', required: false },
+            ],
+            indexes: ['CREATE UNIQUE INDEX idx_inventario_ref ON inventario (ref)'],
+            listRule: '@request.auth.id != ""',
+            viewRule: '@request.auth.id != ""',
+            createRule: '@request.auth.role = "admin"',
+            updateRule: '@request.auth.id != ""',
+            deleteRule: '@request.auth.role = "admin"',
+        });
+        console.log('✅ Colección `inventario` creada.');
+    }
+
+    // 3. gastos_extra
+    let gastos = await pb.collections.getOne('gastos_extra').catch(() => null);
+    if (!gastos) {
+        gastos = await pb.collections.create({
+            name: 'gastos_extra',
+            type: 'base',
+            fields: [
+                { name: 'ref_pieza', type: 'number', required: false },
+                {
+                    name: 'pieza',
+                    type: 'relation',
+                    collectionId: inv.id,
+                    cascadeDelete: false,
+                    maxSelect: 1,
+                    required: false,
+                },
+                { name: 'fecha_gasto', type: 'date', required: false },
+                { name: 'fecha_pago', type: 'date', required: false },
+                { name: 'descripcion', type: 'text', required: false },
+                { name: 'importe', type: 'number', required: false },
+                { name: 'comentarios', type: 'text', required: false },
+            ],
+            listRule: '@request.auth.id != ""',
+            viewRule: '@request.auth.id != ""',
+            createRule: '@request.auth.id != ""',
+            updateRule: '@request.auth.id != ""',
+            deleteRule: '@request.auth.role = "admin"',
+        });
+        console.log('✅ Colección `gastos_extra` creada.');
+    }
 }
 
 async function main() {
     console.log(`🔌 Conectando a PocketBase en ${PB_URL}...`);
 
     try {
-        // Intentar autenticar como admin
-        await pb.admins.authWithPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
-        console.log('✅ Autenticado como Administrador en PocketBase.');
+        // En PocketBase v0.23+ y v0.40+, los administradores son superusers en `_superusers`
+        await pb.collection('_superusers').authWithPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
+        console.log(`✅ Autenticado como Superuser (${ADMIN_EMAIL}).`);
     } catch (err) {
-        console.log('⚠️ No se pudo autenticar con credenciales existentes. Intentando crear primer admin...');
+        console.log('⚠️ No se pudo autenticar como superuser existente. Intentando registrar superuser inicial...');
         try {
-            await pb.admins.create({
+            await pb.collection('_superusers').create({
                 email: ADMIN_EMAIL,
                 password: ADMIN_PASSWORD,
                 passwordConfirm: ADMIN_PASSWORD,
             });
-            await pb.admins.authWithPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
-            console.log(`✅ Primer administrador creado exitosamente (${ADMIN_EMAIL}).`);
+            await pb.collection('_superusers').authWithPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
+            console.log(`✅ Primer superuser creado exitosamente (${ADMIN_EMAIL}).`);
         } catch (createErr) {
-            console.error('❌ Error fatal de autenticación en PocketBase:', createErr.message);
-            console.log('Por favor asegúrate de que PocketBase está corriendo (ej: `make backend-up`)');
+            console.error('❌ Error de autenticación en PocketBase:', createErr.message);
+            console.log('\n💡 Si es la primera vez, puedes crear el superuser ejecutando:');
+            console.log(`docker exec -it rey-arrecife-pocketbase-dev pocketbase superuser upsert ${ADMIN_EMAIL} ${ADMIN_PASSWORD} --dir=/pb_data`);
             process.exit(1);
         }
     }
 
-    // Ruta de los CSVs en la raíz del proyecto
+    // Asegurar colecciones y reglas
+    await ensureSchema();
+
+    // Rutas de CSV
     const rootDir = path.resolve(__dirname, '../../');
     const inventarioCsvPath = path.join(rootDir, 'Mis Corales - Rey del Arrecife sevillano SL - Inventario.csv');
     const gastosCsvPath = path.join(rootDir, 'Mis Corales - Rey del Arrecife sevillano SL - Gastos extra.csv');
@@ -84,7 +184,7 @@ async function main() {
         trim: true,
     });
 
-    console.log(`📦 Procesando ${inventarioRows.length} artículos del inventario...`);
+    console.log(`📦 Procesando e importando ${inventarioRows.length} artículos del inventario...`);
     const refToRecordId = new Map();
 
     for (const row of inventarioRows) {
@@ -108,7 +208,6 @@ async function main() {
         };
 
         try {
-            // Comprobar si ya existe por ref
             const existing = await pb.collection('inventario').getFirstListItem(`ref = ${refNum}`).catch(() => null);
             if (existing) {
                 await pb.collection('inventario').update(existing.id, data);
@@ -118,12 +217,12 @@ async function main() {
                 refToRecordId.set(refNum, created.id);
             }
         } catch (e) {
-            console.error(`Error guardando ref ${refNum}:`, e.message);
+            console.error(`⚠️ Error guardando ref ${refNum}:`, e.message);
         }
     }
-    console.log(`✅ Inventario migrado: ${refToRecordId.size} piezas registradas.`);
+    console.log(`✅ Inventario migrado: ${refToRecordId.size} piezas registradas en PocketBase.`);
 
-    // Migrar Gastos Extra si existe el fichero
+    // Migrar Gastos Extra
     if (fs.existsSync(gastosCsvPath)) {
         console.log('📖 Leyendo fichero de Gastos Extra...');
         const gastosContent = fs.readFileSync(gastosCsvPath, 'utf-8');
@@ -133,7 +232,7 @@ async function main() {
             trim: true,
         });
 
-        console.log(`💸 Procesando ${gastosRows.length} gastos extra...`);
+        console.log(`💸 Procesando e importando ${gastosRows.length} gastos extra...`);
         let gastosGuardados = 0;
 
         for (const row of gastosRows) {
@@ -154,13 +253,13 @@ async function main() {
                 await pb.collection('gastos_extra').create(gastoData);
                 gastosGuardados++;
             } catch (err) {
-                console.error(`Error guardando gasto para ref ${refPieza}:`, err.message);
+                console.error(`⚠️ Error guardando gasto para ref ${refPieza}:`, err.message);
             }
         }
         console.log(`✅ Gastos extra migrados: ${gastosGuardados} registros procesados.`);
     }
 
-    console.log('🎉 Migración completada con éxito.');
+    console.log('🎉 Migración completada exitosamente.');
 }
 
 main().catch(err => {
