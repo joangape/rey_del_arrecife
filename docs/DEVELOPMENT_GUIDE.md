@@ -44,6 +44,8 @@ make logs
 
 - **Frontend Angular**: [http://localhost:4200](http://localhost:4200)
 - **PocketBase Admin UI**: [http://localhost:8090/_/](http://localhost:8090/_/)
+  - **Email Admin por defecto**: `admin@reydelarrecife.local`
+  - **Contraseña Admin por defecto**: `ReyDelArrecife2026!`
 - **PocketBase API Endpoints**: `http://localhost:8090/api/`
 
 ---
