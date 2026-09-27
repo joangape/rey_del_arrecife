@@ -6,6 +6,8 @@
   "scripts": {
     "seed": "node scripts/seed_csv.js",
     "test:auth": "node tests/auth_whitelist.test.js",
+    "test:guard": "node tests/inventory_guard.test.js",
+    "test": "node tests/auth_whitelist.test.js && node tests/inventory_guard.test.js",
     "oauth:google": "node scripts/setup_google_oauth.js"
   },
   "dependencies": {

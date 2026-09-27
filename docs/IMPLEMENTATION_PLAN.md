@@ -65,8 +65,11 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
   - [x] Implementación y adaptación a PocketBase v0.40 en `backend/pb_hooks/auth_whitelist.pb.js`.
   - [x] Pruebas de integración automatizadas (`make test-auth` / `backend/tests/auth_whitelist.test.js`) validando los 3 escenarios: rechazo de no invitados (403), rechazo de inactivos (403) y vinculación exitosa de activos.
   - [x] Guía técnica completa y script de configuración de credenciales de Google OAuth2 en [GOOGLE_OAUTH_SETUP.md](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/GOOGLE_OAUTH_SETUP.md) y `backend/scripts/setup_google_oauth.js`.
-- [ ] **2.3 Hook de Protección de Campos de Inventario (`inventory_guard.pb.js`)**:
-  - [ ] Garantizar a nivel de servidor que un usuario con rol `partner` no pueda alterar `costo`, `fecha_compra`, `origen` ni `ref`, aunque envíe un payload manipulado por API.
+- [x] **2.3 Hook de Protección de Campos de Inventario (`inventory_guard.pb.js`)**:
+  - [x] Implementación en `backend/pb_hooks/inventory_guard.pb.js` protegiendo a nivel de servidor los campos inmutables para el rol `partner` (`ref`, `costo`, `fecha_compra`, `origen`, `descripcion`, `gastos_total`, `foto_url`, `fotos`), permitiendo exclusivamente la edición de campos comerciales (`pvp`, `a_pagar`, `estado`, `comentarios`, `fecha_venta`, `fecha_pagado`).
+  - [x] Bloqueo a nivel de hook de operaciones de creación (`onRecordCreateRequest`) y eliminación (`onRecordDeleteRequest`) para usuarios no administradores.
+  - [x] Tolerancia ante envíos de datos completos desde el cliente siempre que los campos protegidos no hayan sido alterados respecto al registro en base de datos.
+  - [x] Suite de pruebas automatizadas de integración (`make test-guard` / `backend/tests/inventory_guard.test.js`) con 14 casos de prueba cubriendo roles `admin`, `partner` y llamadas anónimas.
 - [ ] **2.4 Automatización de Migraciones (`pb_migrations/`)**:
   - [ ] Exportar el esquema actual a ficheros `.js` de migración PocketBase para despliegue automatizado sin necesidad de correr scripts manuales.
 

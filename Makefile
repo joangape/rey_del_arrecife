@@ -34,6 +34,14 @@ test-auth: ## Ejecuta las pruebas de integración del hook de autenticación OAu
 	@echo "$(CYAN)Ejecutando pruebas de integración OAuth2 Whitelist...$(RESET)"
 	@cd backend && npm run test:auth
 
+test-guard: ## Ejecuta las pruebas de integración del hook de protección de inventario
+	@echo "$(CYAN)Ejecutando pruebas de integración Inventory Guard...$(RESET)"
+	@cd backend && npm run test:guard
+
+test: ## Ejecuta todas las pruebas de backend (auth y guard)
+	@echo "$(CYAN)Ejecutando todas las pruebas de backend...$(RESET)"
+	@cd backend && npm test
+
 frontend-install: ## Instala las dependencias del frontend Angular
 	@cd frontend && npm install
 
