@@ -1,3 +1,31 @@
-.inventario-detail-view {
-  padding: 1.5rem;
+:host {
+  display: block;
+}
+
+/* Transiciones suaves en imágenes y tarjetas */
+img {
+  transition: opacity 0.2s ease-in-out, transform 0.25s ease-out;
+}
+
+/* Efecto sutil de resaltado para tarjeta de métricas */
+.metric-card-glow {
+  box-shadow: 0 0 20px -5px rgba(20, 184, 166, 0.15);
+}
+
+/* Personalización del scroll horizontal en minicarousel */
+::-webkit-scrollbar {
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
 }

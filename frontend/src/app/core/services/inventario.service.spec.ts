@@ -234,4 +234,73 @@ describe('InventarioService', () => {
     };
     expect(service.getItemThumbnail(itemWithoutFotos)).toBeNull();
   });
+
+  it('should fetch single item by id', async () => {
+    const mockItem = { id: 'item1', ref: 1 };
+    const getOneSpy = vi.fn().mockResolvedValue(mockItem);
+    mockPbService.pb.collection = vi.fn().mockReturnValue({
+      getList: getListSpy,
+      getOne: getOneSpy,
+    });
+
+    const result = await service.getItemById('item1');
+    expect(getOneSpy).toHaveBeenCalledWith('item1', { requestKey: null });
+    expect(result).toEqual(mockItem);
+  });
+
+  it('should update item and update local signal list', async () => {
+    const updatedData = { pvp: 800 };
+    const updateSpy = vi.fn().mockResolvedValue({ id: 'item1', ref: 1, pvp: 800 });
+    mockPbService.pb.collection = vi.fn().mockReturnValue({
+      getList: getListSpy,
+      update: updateSpy,
+    });
+
+    const result = await service.updateItem('item1', updatedData);
+    expect(updateSpy).toHaveBeenCalledWith('item1', updatedData);
+    expect(result.pvp).toBe(800);
+    expect(service.items().find((i) => i.id === 'item1')?.pvp).toBe(800);
+  });
+
+  it('should delete item and remove it from signal list', async () => {
+    const deleteSpy = vi.fn().mockResolvedValue(true);
+    mockPbService.pb.collection = vi.fn().mockReturnValue({
+      getList: getListSpy,
+      delete: deleteSpy,
+    });
+
+    await service.deleteItem('item1');
+    expect(deleteSpy).toHaveBeenCalledWith('item1');
+    expect(service.items().find((i) => i.id === 'item1')).toBeUndefined();
+    expect(service.totalItems()).toBe(1);
+  });
+
+  it('should fetch related gastos extra for an item', async () => {
+    const mockGastos = [{ id: 'g1', ref_pieza: 1, importe: 40 }];
+    const getFullListSpy = vi.fn().mockResolvedValue(mockGastos);
+    mockPbService.pb.collection = vi.fn().mockReturnValue({
+      getList: getListSpy,
+      getFullList: getFullListSpy,
+    });
+
+    const result = await service.getItemGastos(1, 'item1');
+    expect(getFullListSpy).toHaveBeenCalledWith({
+      filter: '(ref_pieza = 1 || pieza = "item1")',
+      sort: '-fecha_gasto',
+      requestKey: null,
+    });
+    expect(result).toEqual(mockGastos);
+  });
+
+  it('should return all photo full urls', () => {
+    const itemWithMultiple: InventarioItem = {
+      id: 'it1',
+      ref: 5,
+      fotos: ['a.jpg', 'b.jpg'],
+    };
+    const urls = service.getItemPhotoUrls(itemWithMultiple);
+    expect(urls.length).toBe(2);
+    expect(mockPbService.getFileUrl).toHaveBeenCalledTimes(2);
+  });
 });
+

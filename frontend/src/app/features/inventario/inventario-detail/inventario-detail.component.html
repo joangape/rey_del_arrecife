@@ -1,36 +1,761 @@
-<article class="space-y-6">
-  <div class="flex items-center gap-3">
-    <a
-      routerLink="/inventario"
-      class="text-xs font-medium text-primary hover:underline flex items-center gap-1"
-    >
-      ← Volver al Inventario
-    </a>
-  </div>
+<section class="space-y-6 animate-in fade-in duration-300">
+  <!-- Barra Superior de Navegación y Acciones -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border/60">
+    <div class="flex items-center gap-3 flex-wrap">
+      <a
+        routerLink="/inventario"
+        class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors px-2.5 py-1.5 rounded-lg border border-border/60 bg-card/60 backdrop-blur-sm"
+      >
+        <ng-icon name="lucideArrowLeft" class="size-3.5" />
+        <span>Volver al Catálogo</span>
+      </a>
 
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border/60">
-    <div>
-      <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-bold tracking-tight text-foreground">Ficha de Detalle de Pieza</h1>
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-          Placeholder
+      @if (item()) {
+        <span class="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-secondary text-secondary-foreground border border-border">
+          REF #{{ item()?.ref }}
         </span>
-      </div>
-      <p class="text-sm text-muted-foreground mt-1">
-        Ficha técnica, galería de fotografías, desglose financiero y gastos vinculados.
-      </p>
+        <span
+          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+          [ngClass]="getEstadoBadgeClass(item()?.estado)"
+        >
+          {{ item()?.estado || 'Sin Estado' }}
+        </span>
+      }
+    </div>
+
+    <!-- Indicador de Rol y Botones de Acción -->
+    <div class="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+      <!-- Badge de Rol -->
+      @if (isAdmin()) {
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/30">
+          👑 Admin (Acceso Total)
+        </span>
+      } @else {
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+          🐠 Socio (Edición Comercial)
+        </span>
+      }
+
+      <!-- Descartar Cambios -->
+      @if (itemForm.dirty) {
+        <button
+          type="button"
+          (click)="discardChanges()"
+          [disabled]="isSaving()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground border border-border/70 bg-card/50 hover:bg-muted/40 transition-colors cursor-pointer"
+        >
+          <ng-icon name="lucideRotateCcw" class="size-3.5" />
+          <span>Descartar</span>
+        </button>
+      }
+
+      <!-- Guardar Cambios -->
+      <button
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="isSaving() || (itemForm.pristine && !isUploading())"
+        class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-all cursor-pointer"
+      >
+        @if (isSaving()) {
+          <ng-icon name="lucideLoader2" class="size-3.5 animate-spin" />
+          <span>Guardando...</span>
+        } @else {
+          <ng-icon name="lucideSave" class="size-3.5" />
+          <span>Guardar Cambios</span>
+        }
+      </button>
+
+      <!-- Botón de Borrado (Exclusivo Administrador) -->
+      @if (isAdmin()) {
+        <hlm-alert-dialog>
+          <button
+            id="delete-piece-trigger"
+            hlmAlertDialogTrigger
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:text-rose-300 border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 transition-colors cursor-pointer"
+          >
+            <ng-icon name="lucideTrash2" class="size-3.5" />
+            <span class="hidden md:inline">Eliminar Pieza</span>
+          </button>
+
+          <hlm-alert-dialog-content *hlmAlertDialogPortal class="sm:max-w-[440px] bg-card border-border/80">
+            <hlm-alert-dialog-header>
+              <h3 hlmAlertDialogTitle class="text-base font-bold text-foreground flex items-center gap-2">
+                <ng-icon name="lucideAlertCircle" class="size-5 text-rose-500" />
+                <span>¿Eliminar esta pieza del inventario?</span>
+              </h3>
+              <p hlmAlertDialogDescription class="text-xs text-muted-foreground mt-2 leading-relaxed">
+                Esta acción eliminará de forma irreversible el registro de la pieza
+                <strong class="text-foreground">Ref. #{{ item()?.ref }}</strong>
+                ({{ item()?.descripcion || 'Sin descripción' }}).
+              </p>
+            </hlm-alert-dialog-header>
+            <hlm-alert-dialog-footer class="mt-4 flex items-center justify-end gap-2">
+              <button hlmAlertDialogCancel type="button" class="text-xs">Cancelar</button>
+              <button
+                hlmAlertDialogAction
+                type="button"
+                (click)="confirmDeletePiece()"
+                [disabled]="isDeleting()"
+                class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-3 py-2 rounded-md"
+              >
+                @if (isDeleting()) {
+                  <ng-icon name="lucideLoader2" class="size-3.5 animate-spin mr-1" />
+                  <span>Eliminando...</span>
+                } @else {
+                  <span>Sí, Eliminar Definitivamente</span>
+                }
+              </button>
+            </hlm-alert-dialog-footer>
+          </hlm-alert-dialog-content>
+        </hlm-alert-dialog>
+      }
     </div>
   </div>
 
-  <div class="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center flex flex-col items-center justify-center space-y-4">
-    <div class="size-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-2xl glow-cyan">
-      💎
+  <!-- Estado de Carga -->
+  @if (isLoading()) {
+    <div class="p-16 rounded-xl border border-border/60 bg-card/40 flex flex-col items-center justify-center space-y-3">
+      <ng-icon name="lucideLoader2" class="size-8 text-primary animate-spin" />
+      <p class="text-xs font-medium text-muted-foreground">Cargando ficha técnica y datos comerciales...</p>
     </div>
-    <div class="max-w-md space-y-2">
-      <h3 class="text-lg font-semibold text-foreground">Detalle de Pieza en Preparación</h3>
-      <p class="text-sm text-muted-foreground leading-relaxed">
-        Este panel integrará la vista partida (galería de imágenes PocketBase a la izquierda y ficha financiera con validaciones RBAC a la derecha).
-      </p>
+  } @else if (errorMessage()) {
+    <div class="p-8 rounded-xl border border-rose-500/30 bg-rose-500/10 text-center space-y-3">
+      <ng-icon name="lucideAlertCircle" class="size-8 text-rose-400 mx-auto" />
+      <h3 class="text-sm font-bold text-rose-300">{{ errorMessage() }}</h3>
+      <a routerLink="/inventario" class="inline-block text-xs font-medium text-primary hover:underline">
+        ← Regresar al catálogo
+      </a>
+    </div>
+  } @else if (item()) {
+    <!-- Aviso Informativo para Socios -->
+    @if (!isAdmin()) {
+      <div class="px-4 py-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5 text-xs text-cyan-200/90 flex items-start gap-2.5">
+        <ng-icon name="lucideLock" class="size-4 text-cyan-400 shrink-0 mt-0.5" />
+        <div>
+          <span class="font-semibold text-cyan-300">Modo Colaborador Activo:</span>
+          Los campos de adquisición, coste y fotografías de archivo están protegidos contra edición conforme al protocolo RBAC.
+          Tienes permisos completos para actualizar PVP, liquidación a pagar, estado de la pieza, fechas de venta/pago y comentarios comerciales.
+        </div>
+      </div>
+    }
+
+    <!-- Grid Principal de Ficha: Galería (Izq) + Formulario (Der) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Columna Izquierda: Galería Fotográfica (5 cols) -->
+      <div class="lg:col-span-5 space-y-4">
+        <div class="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm p-4 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between pb-2 border-b border-border/50">
+            <h2 class="text-sm font-bold text-foreground flex items-center gap-2">
+              <ng-icon name="lucideImage" class="size-4 text-primary" />
+              <span>Galería Fotográfica</span>
+            </h2>
+            <span class="text-xs text-muted-foreground font-mono">
+              {{ allPhotos().length }} {{ allPhotos().length === 1 ? 'imagen' : 'imágenes' }}
+            </span>
+          </div>
+
+          <!-- Visor Principal de Foto -->
+          <div class="relative group rounded-xl overflow-hidden border border-border/80 bg-background/80 aspect-4/3 flex items-center justify-center">
+            @if (selectedPhoto()) {
+              <img
+                [src]="selectedPhoto()?.url"
+                [alt]="item()?.descripcion || 'Pieza de inventario'"
+                class="w-full h-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-102"
+                (click)="openLightbox()"
+              />
+
+              <!-- Overlay Hover con Herramientas de Imagen -->
+              <div class="absolute inset-0 bg-background/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
+                <button
+                  type="button"
+                  (click)="openLightbox()"
+                  class="pointer-events-auto px-3 py-1.5 rounded-lg bg-card/90 text-foreground border border-border/80 text-xs font-semibold flex items-center gap-1.5 shadow-md hover:bg-card transition-all cursor-pointer"
+                >
+                  <ng-icon name="lucideZoomIn" class="size-3.5 text-primary" />
+                  <span>Ampliar</span>
+                </button>
+
+                @if (selectedPhoto()?.source === 'external') {
+                  <a
+                    [href]="selectedPhoto()?.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="pointer-events-auto px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1.5 shadow-md hover:bg-primary/90 transition-all"
+                  >
+                    <ng-icon name="lucideExternalLink" class="size-3.5" />
+                    <span>Álbum</span>
+                  </a>
+                }
+              </div>
+
+              <!-- Badge indicador de origen de la foto -->
+              <div class="absolute top-2.5 left-2.5 pointer-events-none">
+                @if (selectedPhoto()?.source === 'pocketbase') {
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 backdrop-blur-xs">
+                    PocketBase
+                  </span>
+                } @else {
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 backdrop-blur-xs">
+                    Google Photos
+                  </span>
+                }
+              </div>
+            } @else {
+              <!-- Fallback sin imagen -->
+              <div class="p-8 text-center space-y-2 text-muted-foreground flex flex-col items-center">
+                <div class="size-14 rounded-2xl bg-muted/30 border border-border/60 flex items-center justify-center text-muted-foreground text-2xl">
+                  💎
+                </div>
+                <p class="text-xs font-medium text-muted-foreground">Sin fotografías registradas</p>
+                <p class="text-[11px] text-muted-foreground/70 max-w-[200px]">
+                  @if (isAdmin()) {
+                    Puedes añadir fotos subiéndolas directamente o enlazando un álbum externo.
+                  } @else {
+                    Esta pieza no cuenta con fotografía cargada.
+                  }
+                </p>
+              </div>
+            }
+          </div>
+
+          <!-- Tira de Miniaturas -->
+          @if (allPhotos().length > 0) {
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 pt-1">
+              @for (photo of allPhotos(); track photo.id) {
+                <div class="relative group/thumb shrink-0">
+                  <button
+                    type="button"
+                    (click)="selectPhoto(photo)"
+                    [class.ring-2]="selectedPhoto()?.id === photo.id"
+                    [class.ring-primary]="selectedPhoto()?.id === photo.id"
+                    [class.border-primary]="selectedPhoto()?.id === photo.id"
+                    class="size-16 rounded-lg overflow-hidden border border-border/80 bg-background/50 p-0.5 transition-all cursor-pointer hover:border-primary/80"
+                  >
+                    <img [src]="photo.url" class="w-full h-full object-cover rounded-md" [alt]="photo.id" />
+                  </button>
+
+                  <!-- Botón de eliminación individual de fotos (Solo Administrador) -->
+                  @if (isAdmin() && photo.source === 'pocketbase') {
+                    <button
+                      type="button"
+                      (click)="deletePhoto(photo)"
+                      class="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity shadow-sm hover:bg-rose-700 cursor-pointer"
+                      title="Eliminar esta fotografía"
+                    >
+                      <ng-icon name="lucideX" class="size-3" />
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Zona de Subida de Fotos (Solo Admin) -->
+          @if (isAdmin()) {
+            <div class="pt-2 border-t border-border/50">
+              <label
+                for="photo-upload"
+                class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-border/80 hover:border-primary/60 bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer text-center"
+              >
+                @if (isUploading()) {
+                  <ng-icon name="lucideLoader2" class="size-5 text-primary animate-spin" />
+                  <span class="text-xs font-medium text-foreground mt-1">Cargando fotografía...</span>
+                } @else {
+                  <ng-icon name="lucideUploadCloud" class="size-5 text-muted-foreground" />
+                  <span class="text-xs font-semibold text-foreground mt-1">Subir fotografías adjuntas</span>
+                  <span class="text-[10px] text-muted-foreground">PNG, JPG, WEBP a PocketBase</span>
+                }
+                <input
+                  id="photo-upload"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  class="hidden"
+                  (change)="onFilesSelected($event)"
+                  [disabled]="isUploading()"
+                />
+              </label>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Columna Derecha: Formulario de Metadatos y Permisos RBAC (7 cols) -->
+      <div class="lg:col-span-7 space-y-6">
+        <form [formGroup]="itemForm" (ngSubmit)="onSubmit()" class="space-y-6">
+          <!-- Tarjeta 1: Información Comercial & Venta (Editable por Admin y Partner) -->
+          <div class="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm p-5 space-y-4 shadow-sm">
+            <div class="flex items-center justify-between pb-2 border-b border-border/50">
+              <h2 class="text-sm font-bold text-foreground flex items-center gap-2">
+                <ng-icon name="lucideTag" class="size-4 text-primary" />
+                <span>Condiciones Comerciales & Venta</span>
+              </h2>
+              <span class="text-[11px] font-medium text-emerald-400 flex items-center gap-1">
+                <ng-icon name="lucideCheck" class="size-3" />
+                Editable
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- PVP (€) -->
+              <div class="space-y-1.5">
+                <label for="pvp" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <ng-icon name="lucideCoins" class="size-3.5 text-amber-400" />
+                  <span>PVP de Venta (€)</span>
+                </label>
+                <div class="relative">
+                  <input
+                    id="pvp"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    formControlName="pvp"
+                    placeholder="0.00"
+                    class="w-full text-sm font-semibold rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
+                  />
+                  <span class="absolute right-3 top-2.5 text-xs text-muted-foreground font-bold">€</span>
+                </div>
+              </div>
+
+              <!-- A Pagar (€) -->
+              <div class="space-y-1.5">
+                <label for="a_pagar" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <ng-icon name="lucideReceipt" class="size-3.5 text-cyan-400" />
+                  <span>Importe a Liquidar (€)</span>
+                </label>
+                <div class="relative">
+                  <input
+                    id="a_pagar"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    formControlName="a_pagar"
+                    placeholder="0.00"
+                    class="w-full text-sm font-semibold rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
+                  />
+                  <span class="absolute right-3 top-2.5 text-xs text-muted-foreground font-bold">€</span>
+                </div>
+              </div>
+
+              <!-- Estado -->
+              <div class="space-y-1.5 sm:col-span-2">
+                <label for="estado" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <span>Estado de la Pieza</span>
+                </label>
+                <div class="flex items-center gap-2 flex-wrap mb-2">
+                  @for (st of availableEstados; track st) {
+                    <button
+                      type="button"
+                      (click)="itemForm.get('estado')?.setValue(st); itemForm.markAsDirty()"
+                      [class.bg-primary]="itemForm.get('estado')?.value === st"
+                      [class.text-primary-foreground]="itemForm.get('estado')?.value === st"
+                      [class.border-primary]="itemForm.get('estado')?.value === st"
+                      class="px-2.5 py-1 rounded-md text-xs font-medium border border-border/70 bg-card hover:bg-muted/40 transition-colors cursor-pointer"
+                    >
+                      {{ st }}
+                    </button>
+                  }
+                </div>
+                <input
+                  id="estado"
+                  type="text"
+                  formControlName="estado"
+                  placeholder="Ej: En sobre 21/5/25, AEM, Disponible..."
+                  class="w-full text-xs rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                />
+              </div>
+
+              <!-- Fecha Venta -->
+              <div class="space-y-1.5">
+                <label for="fecha_venta" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <ng-icon name="lucideCalendar" class="size-3.5 text-muted-foreground" />
+                  <span>Fecha de Venta</span>
+                </label>
+                <input
+                  id="fecha_venta"
+                  type="text"
+                  formControlName="fecha_venta"
+                  placeholder="YYYY-MM-DD o indicación"
+                  class="w-full text-xs rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
+                />
+              </div>
+
+              <!-- Fecha Pagado -->
+              <div class="space-y-1.5">
+                <label for="fecha_pagado" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <ng-icon name="lucideCalendar" class="size-3.5 text-muted-foreground" />
+                  <span>Fecha de Liquidación/Pago</span>
+                </label>
+                <input
+                  id="fecha_pagado"
+                  type="text"
+                  formControlName="fecha_pagado"
+                  placeholder="YYYY-MM-DD o indicación"
+                  class="w-full text-xs rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
+                />
+              </div>
+
+              <!-- Comentarios -->
+              <div class="space-y-1.5 sm:col-span-2">
+                <label for="comentarios" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <ng-icon name="lucideFileText" class="size-3.5 text-muted-foreground" />
+                  <span>Comentarios & Observaciones</span>
+                </label>
+                <textarea
+                  id="comentarios"
+                  rows="2"
+                  formControlName="comentarios"
+                  placeholder="Anotaciones comerciales, acuerdos con clientes o detalles de entrega..."
+                  class="w-full text-xs rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all leading-relaxed"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarjeta 2: Ficha Técnica & Costes de Compra (Protegida - Solo Admin) -->
+          <div
+            class="rounded-2xl border bg-card/60 backdrop-blur-sm p-5 space-y-4 shadow-sm"
+            [class.border-amber-500/30]="isAdmin()"
+            [class.border-border/70]="!isAdmin()"
+          >
+            <div class="flex items-center justify-between pb-2 border-b border-border/50">
+              <h2 class="text-sm font-bold text-foreground flex items-center gap-2">
+                <ng-icon name="lucideFileText" class="size-4 text-amber-400" />
+                <span>Ficha Técnica & Procedencia</span>
+              </h2>
+              @if (isAdmin()) {
+                <span class="text-[11px] font-semibold text-amber-400 flex items-center gap-1">
+                  👑 Control Admin
+                </span>
+              } @else {
+                <span class="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                  <ng-icon name="lucideLock" class="size-3 text-muted-foreground" />
+                  Solo Lectura
+                </span>
+              }
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Referencia (ref) -->
+              <div class="space-y-1.5">
+                <label for="ref" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <span>Número de Referencia</span>
+                  @if (!isAdmin()) {
+                    <ng-icon name="lucideLock" class="size-3 text-muted-foreground" />
+                  }
+                </label>
+                <input
+                  id="ref"
+                  type="number"
+                  formControlName="ref"
+                  [class.bg-muted/40]="!isAdmin()"
+                  [class.text-muted-foreground]="!isAdmin()"
+                  class="w-full text-xs font-mono font-bold rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all disabled:opacity-80"
+                />
+              </div>
+
+              <!-- Origen -->
+              <div class="space-y-1.5">
+                <label for="origen" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <span>Origen / Procedencia</span>
+                  @if (!isAdmin()) {
+                    <ng-icon name="lucideLock" class="size-3 text-muted-foreground" />
+                  }
+                </label>
+                <input
+                  id="origen"
+                  type="text"
+                  formControlName="origen"
+                  placeholder="Ej: Londres, Tiergarten, Arkonaplatz..."
+                  [class.bg-muted/40]="!isAdmin()"
+                  [class.text-muted-foreground]="!isAdmin()"
+                  class="w-full text-xs rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all disabled:opacity-80"
+                />
+              </div>
+
+              <!-- Fecha Compra -->
+              <div class="space-y-1.5">
+                <label for="fecha_compra" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <ng-icon name="lucideCalendar" class="size-3.5 text-muted-foreground" />
+                  <span>Fecha de Compra</span>
+                  @if (!isAdmin()) {
+                    <ng-icon name="lucideLock" class="size-3 text-muted-foreground" />
+                  }
+                </label>
+                <input
+                  id="fecha_compra"
+                  type="text"
+                  formControlName="fecha_compra"
+                  placeholder="YYYY-MM-DD"
+                  [class.bg-muted/40]="!isAdmin()"
+                  [class.text-muted-foreground]="!isAdmin()"
+                  class="w-full text-xs rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono disabled:opacity-80"
+                />
+              </div>
+
+              <!-- Costo Inicial (€) -->
+              <div class="space-y-1.5">
+                <label for="costo" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <span>Coste Inicial de Compra (€)</span>
+                  @if (!isAdmin()) {
+                    <ng-icon name="lucideLock" class="size-3 text-muted-foreground" />
+                  }
+                </label>
+                <div class="relative">
+                  <input
+                    id="costo"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    formControlName="costo"
+                    [class.bg-muted/40]="!isAdmin()"
+                    [class.text-muted-foreground]="!isAdmin()"
+                    class="w-full text-xs font-mono font-bold rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all disabled:opacity-80"
+                  />
+                  <span class="absolute right-3 top-2 text-xs text-muted-foreground font-bold">€</span>
+                </div>
+              </div>
+
+              <!-- Foto URL Externa -->
+              <div class="space-y-1.5 sm:col-span-2">
+                <label for="foto_url" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <ng-icon name="lucideExternalLink" class="size-3.5 text-blue-400" />
+                  <span>Enlace Fotográfico Externo (Google Photos)</span>
+                  @if (!isAdmin()) {
+                    <ng-icon name="lucideLock" class="size-3 text-muted-foreground" />
+                  }
+                </label>
+                <input
+                  id="foto_url"
+                  type="url"
+                  formControlName="foto_url"
+                  placeholder="https://photos.app.goo.gl/..."
+                  [class.bg-muted/40]="!isAdmin()"
+                  [class.text-muted-foreground]="!isAdmin()"
+                  class="w-full text-xs rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono disabled:opacity-80"
+                />
+              </div>
+
+              <!-- Descripción -->
+              <div class="space-y-1.5 sm:col-span-2">
+                <label for="descripcion" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <span>Descripción Técnica & Materiales</span>
+                  @if (!isAdmin()) {
+                    <ng-icon name="lucideLock" class="size-3 text-muted-foreground" />
+                  }
+                </label>
+                <textarea
+                  id="descripcion"
+                  rows="3"
+                  formControlName="descripcion"
+                  placeholder="Detalles sobre materiales, piedras, tallaje, peso o procedencia..."
+                  [class.bg-muted/40]="!isAdmin()"
+                  [class.text-muted-foreground]="!isAdmin()"
+                  class="w-full text-xs rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all leading-relaxed disabled:opacity-80"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Sección 3: Análisis Económico & Gastos Extra Imputados -->
+    <div class="space-y-4 pt-2">
+      <div class="flex items-center justify-between pb-2 border-b border-border/60">
+        <div>
+          <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
+            <ng-icon name="lucideTrendingUp" class="size-5 text-primary" />
+            <span>Balance Financiero & Gastos Imputados</span>
+          </h2>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            Cálculo consolidado de inversión, costes adicionales, liquidación y margen neto comercial.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tarjetas de Métricas Económicas -->
+      <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        <!-- 1. Costo Compra -->
+        <div class="p-3.5 rounded-xl border border-border/70 bg-card/60 backdrop-blur-sm space-y-1">
+          <span class="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+            Coste Inicial
+          </span>
+          <p class="text-base sm:text-lg font-bold font-mono text-foreground">
+            {{ formatCurrency(costoAdquisicion()) }}
+          </p>
+          <span class="text-[10px] text-muted-foreground/80">Compra original</span>
+        </div>
+
+        <!-- 2. Gastos Extra -->
+        <div class="p-3.5 rounded-xl border border-border/70 bg-card/60 backdrop-blur-sm space-y-1">
+          <span class="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+            Gastos Extra
+          </span>
+          <p class="text-base sm:text-lg font-bold font-mono text-foreground">
+            {{ formatCurrency(totalGastosExtra()) }}
+          </p>
+          <span class="text-[10px] text-muted-foreground/80">
+            {{ gastos().length }} {{ gastos().length === 1 ? 'intervención' : 'intervenciones' }}
+          </span>
+        </div>
+
+        <!-- 3. Coste Total Acumulado -->
+        <div class="p-3.5 rounded-xl border border-primary/30 bg-primary/5 backdrop-blur-sm space-y-1">
+          <span class="text-[11px] font-medium text-primary flex items-center gap-1">
+            Coste Total
+          </span>
+          <p class="text-base sm:text-lg font-bold font-mono text-primary">
+            {{ formatCurrency(costeTotalAcumulado()) }}
+          </p>
+          <span class="text-[10px] text-muted-foreground/80">Costo + Gastos</span>
+        </div>
+
+        <!-- 4. PVP Fijado -->
+        <div class="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/5 backdrop-blur-sm space-y-1">
+          <span class="text-[11px] font-medium text-amber-400 flex items-center gap-1">
+            PVP de Venta
+          </span>
+          <p class="text-base sm:text-lg font-bold font-mono text-amber-300">
+            {{ formatCurrency(currentPvp()) }}
+          </p>
+          <span class="text-[10px] text-muted-foreground/80">Precio catálogo</span>
+        </div>
+
+        <!-- 5. Margen Bruto -->
+        <div
+          class="p-3.5 rounded-xl border backdrop-blur-sm space-y-1"
+          [class.border-emerald-500/30]="margenBruto() > 0"
+          [class.bg-emerald-500/5]="margenBruto() > 0"
+          [class.border-rose-500/30]="margenBruto() <= 0"
+          [class.bg-rose-500/5]="margenBruto() <= 0"
+        >
+          <span
+            class="text-[11px] font-medium flex items-center gap-1"
+            [class.text-emerald-400]="margenBruto() > 0"
+            [class.text-rose-400]="margenBruto() <= 0"
+          >
+            Margen Bruto
+          </span>
+          <p
+            class="text-base sm:text-lg font-bold font-mono"
+            [class.text-emerald-300]="margenBruto() > 0"
+            [class.text-rose-300]="margenBruto() <= 0"
+          >
+            {{ formatCurrency(margenBruto()) }}
+          </p>
+          <span class="text-[10px] font-semibold" [class.text-emerald-400]="margenBruto() > 0" [class.text-rose-400]="margenBruto() <= 0">
+            {{ margenPorcentaje() | number : '1.1-1' }}% sobre PVP
+          </span>
+        </div>
+
+        <!-- 6. A Pagar / Liquidación -->
+        <div class="p-3.5 rounded-xl border border-cyan-500/30 bg-cyan-500/5 backdrop-blur-sm space-y-1">
+          <span class="text-[11px] font-medium text-cyan-400 flex items-center gap-1">
+            A Pagar
+          </span>
+          <p class="text-base sm:text-lg font-bold font-mono text-cyan-300">
+            {{ formatCurrency(currentAPagar()) }}
+          </p>
+          <span class="text-[10px] text-muted-foreground/80">Liquidación pactada</span>
+        </div>
+      </div>
+
+      <!-- Desglose de Gastos Extra Vinculados -->
+      <div class="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm p-4 space-y-3 shadow-sm">
+        <div class="flex items-center justify-between pb-2 border-b border-border/50">
+          <h3 class="text-xs font-bold text-foreground flex items-center gap-2">
+            <ng-icon name="lucideReceipt" class="size-4 text-primary" />
+            <span>Detalle de Intervenciones & Gastos Asociados</span>
+          </h3>
+          <span class="text-xs text-muted-foreground font-mono">
+            Total: {{ formatCurrency(totalGastosExtra()) }}
+          </span>
+        </div>
+
+        @if (gastos().length === 0) {
+          <div class="py-8 text-center text-muted-foreground text-xs space-y-1">
+            <p>No constan gastos extra registrados para esta pieza.</p>
+            <p class="text-[11px] text-muted-foreground/70">
+              Cualquier intervención (enfilado, arreglo, transporte) imputada en el módulo de gastos se reflejará aquí.
+            </p>
+          </div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="text-[11px] text-muted-foreground font-semibold border-b border-border/60">
+                <tr>
+                  <th class="py-2.5 px-3">Concepto / Intervención</th>
+                  <th class="py-2.5 px-3">Fecha Gasto</th>
+                  <th class="py-2.5 px-3">Fecha Pago</th>
+                  <th class="py-2.5 px-3">Comentarios</th>
+                  <th class="py-2.5 px-3 text-right">Importe</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border/40">
+                @for (gasto of gastos(); track gasto.id) {
+                  <tr class="hover:bg-muted/30 transition-colors">
+                    <td class="py-2 px-3 font-medium text-foreground">
+                      {{ gasto.descripcion || 'Gasto no especificado' }}
+                    </td>
+                    <td class="py-2 px-3 font-mono text-muted-foreground">
+                      {{ gasto.fecha_gasto || '—' }}
+                    </td>
+                    <td class="py-2 px-3 font-mono text-muted-foreground">
+                      @if (gasto.fecha_pago) {
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          {{ gasto.fecha_pago }}
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          Pendiente
+                        </span>
+                      }
+                    </td>
+                    <td class="py-2 px-3 text-muted-foreground max-w-[200px] truncate">
+                      {{ gasto.comentarios || '—' }}
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono font-bold text-foreground">
+                      {{ formatCurrency(gasto.importe) }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>
+
+<!-- Visor Lightbox Modal en Pantalla Completa -->
+@if (isLightboxOpen() && selectedPhoto()) {
+  <div
+    class="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-in fade-in duration-200"
+    (click)="closeLightbox()"
+  >
+    <div class="relative max-w-4xl max-h-[85vh] w-full flex flex-col items-center" (click)="$event.stopPropagation()">
+      <div class="w-full flex items-center justify-between pb-3 text-white">
+        <span class="text-xs font-mono font-bold text-muted-foreground">
+          Ref. #{{ item()?.ref }} — {{ selectedPhoto()?.source === 'pocketbase' ? 'Foto PocketBase' : 'Google Photos' }}
+        </span>
+        <button
+          type="button"
+          (click)="closeLightbox()"
+          class="p-1.5 rounded-lg bg-card/80 hover:bg-card text-foreground border border-border/80 transition-colors cursor-pointer"
+          title="Cerrar visor"
+        >
+          <ng-icon name="lucideX" class="size-4" />
+        </button>
+      </div>
+
+      <img
+        [src]="selectedPhoto()?.url"
+        [alt]="item()?.descripcion || 'Foto ampliada'"
+        class="max-w-full max-h-[75vh] object-contain rounded-xl border border-border/80 shadow-2xl"
+      />
     </div>
   </div>
-</article>
+}

@@ -16,7 +16,7 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
 [Fase 3: Frontend Foundation & Design System (Spartan UI)] ✅ COMPLETADO
                │
                ▼
-[Fase 4: Módulo de Inventario (Catálogo & Ficha Comercial)] 🔄 EN CURSO (4.1 LISTO)
+[Fase 4: Módulo de Inventario (Catálogo & Ficha Comercial)] ✅ COMPLETADO
                │
                ▼
 [Fase 5: Módulo de Gastos Extra & Liquidaciones]
@@ -111,15 +111,18 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
   - [x] Paginación optimizada para +300 artículos con selector configurable de elementos por página.
   - [x] Vista alternativa en cuadrícula de tarjetas (*Cards view*) con foto principal y datos clave.
   - [x] Servicio reactivo `InventarioService` con Signals, cliente PocketBase y suite de pruebas unitarias al 100%.
-- [ ] **4.2 Ficha de Detalle y Edición de Pieza (`/inventario/:id`)**:
-  - [ ] Visualización completa de metadatos de la pieza.
-  - [ ] **Control de visibilidad y edición por rol**:
-    - `admin`: Edición de todos los campos, botón de borrado, alta de nuevas piezas.
-    - `partner`: Edición habilitada exclusivamente en `pvp`, `a_pagar`, `estado`, `comentarios`, `fecha_venta`, `fecha_pagado`. Campos de compra/coste bloqueados para edición.
-  - [ ] **Galería de Fotos**:
-    - Renderizado de imágenes desde enlace externo (`foto_url` de Google Photos).
-    - Subida y previsualización de nuevas fotos adjuntas a PocketBase (`fotos`).
-  - [ ] Resumen económico en ficha: Costo + Gastos Extra = Coste Total vs PVP y margen resultante.
+- [x] **4.2 Ficha de Detalle y Edición de Pieza (`/inventario/:id`)**:
+  - [x] Visualización completa de metadatos de la pieza (`ref`, `descripcion`, `origen`, `costo`, `gastos_total`, `pvp`, `a_pagar`, `estado`, fechas comerciales y observaciones).
+  - [x] **Control de visibilidad y edición por rol**:
+    - `admin`: Edición de todos los campos, borrado con confirmación modal (`HlmAlertDialog`), gestión total de fotos.
+    - `partner`: Edición habilitada exclusivamente en `pvp`, `a_pagar`, `estado`, `comentarios`, `fecha_venta`, `fecha_pagado`. Campos de compra/coste bloqueados con indicador de solo lectura y candado según regla RBAC y hook de servidor.
+  - [x] **Galería de Fotos**:
+    - Renderizado de imágenes desde enlace externo (`foto_url` de Google Photos) y visor ampliado modal (Lightbox).
+    - Subida y previsualización de nuevas fotos adjuntas a PocketBase (`fotos`) con eliminación individual para `admin`.
+  - [x] **Resumen económico en ficha**:
+    - Tarjetas KPI: Costo Compra + Gastos Extra = Coste Total vs PVP, Margen Bruto (€ y %), Liquidación A Pagar y Beneficio Neto.
+    - Tabla integrada con desglose de `gastos_extra` vinculados a la pieza.
+  - [x] Suite de pruebas unitarias (`inventario-detail.component.spec.ts`) y build de producción verificado al 100%.
 
 ---
 

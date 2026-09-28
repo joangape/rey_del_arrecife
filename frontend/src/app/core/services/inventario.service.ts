@@ -264,9 +264,108 @@ export class InventarioService {
   }
 
   /**
+   * Obtiene todas las URLs públicas completas de las fotos cargadas en PocketBase para una pieza.
+   */
+  getItemPhotoUrls(item: InventarioItem): string[] {
+    if (!item.fotos || item.fotos.length === 0) {
+      return [];
+    }
+    return item.fotos.map((filename) => this.pbService.getFileUrl(item, filename));
+  }
+
+  /**
    * Determina si el artículo cuenta con un enlace externo de fotografía (ej. Google Photos).
    */
   hasExternalPhoto(item: InventarioItem): boolean {
     return !!(item.foto_url && item.foto_url.trim().startsWith('http'));
+  }
+
+  /**
+   * Obtiene una pieza por su ID de PocketBase.
+   */
+  async getItemById(id: string): Promise<InventarioItem> {
+    return await this.pbService.pb.collection('inventario').getOne<InventarioItem>(id, {
+      requestKey: null,
+    });
+  }
+
+  /**
+   * Actualiza los datos de una pieza. Acepta objeto parcial o FormData (para archivos).
+   */
+  async updateItem(
+    id: string,
+    data: Partial<InventarioItem> | FormData
+  ): Promise<InventarioItem> {
+    const updated = await this.pbService.pb
+      .collection('inventario')
+      .update<InventarioItem>(id, data);
+
+    // Actualiza la lista en memoria si el ítem ya existe en la página
+    this.items.update((list) =>
+      list.map((item) => (item.id === id ? { ...item, ...updated } : item))
+    );
+
+    return updated;
+  }
+
+  /**
+   * Elimina una pieza por su ID.
+   */
+  async deleteItem(id: string): Promise<void> {
+    await this.pbService.pb.collection('inventario').delete(id);
+    this.items.update((list) => list.filter((item) => item.id !== id));
+    this.totalItems.update((t) => Math.max(0, t - 1));
+  }
+
+  /**
+   * Da de alta una nueva pieza de inventario.
+   */
+  async createItem(
+    data: Partial<InventarioItem> | FormData
+  ): Promise<InventarioItem> {
+    const created = await this.pbService.pb
+      .collection('inventario')
+      .create<InventarioItem>(data);
+    this.loadItems();
+    return created;
+  }
+
+  /**
+   * Carga los gastos extra vinculados a una pieza (por ref o id de pieza).
+   */
+  async getItemGastos(itemRef: number, itemId?: string): Promise<any[]> {
+    try {
+      const filter = itemId
+        ? `(ref_pieza = ${itemRef} || pieza = "${itemId}")`
+        : `ref_pieza = ${itemRef}`;
+
+      return await this.pbService.pb.collection('gastos_extra').getFullList({
+        filter,
+        sort: '-fecha_gasto',
+        requestKey: null,
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Sube una o varias fotografías adjuntas a PocketBase para la pieza indicada.
+   */
+  async uploadItemPhotos(id: string, files: File[]): Promise<InventarioItem> {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append('fotos+', file);
+    }
+    return await this.updateItem(id, formData);
+  }
+
+  /**
+   * Elimina un archivo fotográfico específico adjunto a una pieza.
+   */
+  async deleteItemPhoto(id: string, filename: string): Promise<InventarioItem> {
+    return await this.pbService.pb.collection('inventario').update<InventarioItem>(id, {
+      'fotos-': [filename],
+    });
   }
 }
