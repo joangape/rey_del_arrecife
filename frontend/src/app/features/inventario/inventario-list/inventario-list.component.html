@@ -1,29 +1,662 @@
-<section class="space-y-6">
-  <!-- Cabecera de Página -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border/60">
+<section class="space-y-5 animate-in fade-in duration-300">
+  <!-- Cabecera y Métricas Rápidas -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2">
     <div>
-      <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-bold tracking-tight text-foreground">Catálogo de Inventario</h1>
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-          Placeholder
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <span>Catálogo de Piezas</span>
+        </h1>
+        <span
+          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+        >
+          {{ inventarioService.totalItems() }} piezas
         </span>
       </div>
       <p class="text-sm text-muted-foreground mt-1">
-        Gestión integral de piezas de joyería, estados comerciales y precios de venta.
+        Consulta, ordenación, trazabilidad comercial y detalle de inventario.
       </p>
+    </div>
+
+    <!-- Controles de cabecera: Resumen de PVP y Selector de Vista -->
+    <div class="flex items-center gap-3 self-start md:self-auto flex-wrap">
+      <!-- Métrica PVP Página -->
+      <div
+        class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/60 bg-card/60 backdrop-blur-sm text-xs"
+      >
+        <span class="text-muted-foreground flex items-center gap-1">
+          <ng-icon name="lucideCoins" class="size-3.5 text-amber-400" />
+          PVP Página:
+        </span>
+        <span class="font-bold text-foreground">
+          {{ formatCurrency(inventarioService.totalPvpCurrentPage()) }}
+        </span>
+      </div>
+
+      <!-- Selector Vista Tabla / Cuadrícula -->
+      <div class="inline-flex items-center p-1 rounded-lg border border-border/80 bg-muted/40">
+        <button
+          type="button"
+          (click)="setViewMode('table')"
+          [class.bg-card]="inventarioService.viewMode() === 'table'"
+          [class.text-foreground]="inventarioService.viewMode() === 'table'"
+          [class.shadow-xs]="inventarioService.viewMode() === 'table'"
+          [class.text-muted-foreground]="inventarioService.viewMode() !== 'table'"
+          class="px-2.5 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer hover:text-foreground"
+          title="Vista de Tabla"
+        >
+          <ng-icon name="lucideLayoutList" class="size-3.5" />
+          <span class="hidden sm:inline">Tabla</span>
+        </button>
+        <button
+          type="button"
+          (click)="setViewMode('grid')"
+          [class.bg-card]="inventarioService.viewMode() === 'grid'"
+          [class.text-foreground]="inventarioService.viewMode() === 'grid'"
+          [class.shadow-xs]="inventarioService.viewMode() === 'grid'"
+          [class.text-muted-foreground]="inventarioService.viewMode() !== 'grid'"
+          class="px-2.5 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer hover:text-foreground"
+          title="Vista de Cuadrícula"
+        >
+          <ng-icon name="lucideLayoutGrid" class="size-3.5" />
+          <span class="hidden sm:inline">Tarjetas</span>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Placeholder Card Principal -->
-  <div class="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center flex flex-col items-center justify-center space-y-4">
-    <div class="size-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-2xl glow-cyan">
-      📦
+  <!-- Barra de Búsqueda y Filtros Rápidos -->
+  <div class="rounded-xl border border-border/80 bg-card/60 backdrop-blur-md p-4 space-y-3 shadow-xs">
+    <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+      <!-- Input de Búsqueda Global -->
+      <div class="relative flex-1">
+        <ng-icon
+          name="lucideSearch"
+          class="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
+        />
+        <input
+          hlmInput
+          type="text"
+          [value]="inventarioService.searchQuery()"
+          (input)="onSearchChange($event)"
+          placeholder="Buscar por referencia (ej: 42), descripción o procedencia..."
+          class="pl-10 pr-9 w-full h-10 bg-background/80 focus:bg-background transition-colors text-sm"
+        />
+        @if (inventarioService.searchQuery()) {
+          <button
+            type="button"
+            (click)="clearSearch()"
+            class="absolute right-2.5 top-1/2 -translate-y-1/2 size-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            title="Borrar búsqueda"
+          >
+            <ng-icon name="lucideX" class="size-3.5" />
+          </button>
+        }
+      </div>
+
+      <!-- Filtro por Origen y Botón Restablecer -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <!-- Selector Origen -->
+        <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <ng-icon name="lucideMapPin" class="size-3.5 text-primary" />
+          <select
+            [value]="inventarioService.selectedOrigen()"
+            (change)="onOrigenChange($event)"
+            class="h-10 px-3 py-1.5 rounded-lg border border-border/80 bg-background/90 text-foreground text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer transition-colors"
+          >
+            <option value="all">Todos los orígenes</option>
+            @for (origen of inventarioService.availableOrigenes(); track origen) {
+              <option [value]="origen">{{ origen }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Botón Reset si hay filtros activos -->
+        @if (inventarioService.hasActiveFilters()) {
+          <button
+            hlmBtn
+            variant="ghost"
+            size="sm"
+            (click)="resetAll()"
+            class="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1.5 h-10 cursor-pointer"
+          >
+            <ng-icon name="lucideRotateCcw" class="size-3.5" />
+            <span>Restablecer</span>
+          </button>
+        }
+      </div>
     </div>
-    <div class="max-w-md space-y-2">
-      <h3 class="text-lg font-semibold text-foreground">Vista de Inventario en Preparación</h3>
-      <p class="text-sm text-muted-foreground leading-relaxed">
-        Aquí se cargará la tabla enriquecida interactiva con buscador en tiempo real, filtros por estado (Disponible, AEM, VyP, Vendida) y previsualización de fotografías.
-      </p>
+
+    <!-- Chips Rápidos de Estado -->
+    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar text-xs">
+      <span class="text-muted-foreground flex items-center gap-1 pr-1 font-medium">
+        <ng-icon name="lucideTag" class="size-3" />
+        Estado:
+      </span>
+      @for (item of inventarioService.quickEstados; track item.value) {
+        <button
+          type="button"
+          (click)="onEstadoClick(item.value)"
+          [class.bg-primary]="inventarioService.selectedEstado() === item.value"
+          [class.text-primary-foreground]="inventarioService.selectedEstado() === item.value"
+          [class.border-primary]="inventarioService.selectedEstado() === item.value"
+          [class.bg-muted/40]="inventarioService.selectedEstado() !== item.value"
+          [class.text-muted-foreground]="inventarioService.selectedEstado() !== item.value"
+          [class.border-border/60]="inventarioService.selectedEstado() !== item.value"
+          class="px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap transition-all cursor-pointer hover:border-primary/50 hover:text-foreground"
+        >
+          {{ item.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Estado de Error -->
+  @if (inventarioService.error()) {
+    <div class="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive flex items-center justify-between">
+      <span>{{ inventarioService.error() }}</span>
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        (click)="inventarioService.loadItems()"
+        class="border-destructive/30 text-destructive hover:bg-destructive/20"
+      >
+        Reintentar
+      </button>
+    </div>
+  }
+
+  <!-- VISTA 1: TABLA SPARTAN -->
+  @if (inventarioService.viewMode() === 'table') {
+    <div class="rounded-xl border border-border/80 bg-card overflow-hidden shadow-xs">
+      <div hlmTableContainer class="overflow-x-auto">
+        <table hlmTable class="w-full">
+          <thead hlmTHead class="bg-muted/30">
+            <tr hlmTr class="border-b border-border/70 text-xs">
+              <!-- Columna Ref -->
+              <th hlmTh class="w-24">
+                <button
+                  type="button"
+                  (click)="toggleSort('ref')"
+                  class="flex items-center gap-1.5 font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  <span>Ref.</span>
+                  @if (inventarioService.sortField() === 'ref') {
+                    <ng-icon
+                      [name]="inventarioService.sortDirection() === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                      class="size-3 text-primary"
+                    />
+                  } @else {
+                    <ng-icon name="lucideArrowUpDown" class="size-3 text-muted-foreground/60" />
+                  }
+                </button>
+              </th>
+
+              <!-- Columna Foto / Imagen -->
+              <th hlmTh class="w-16 text-center">Foto</th>
+
+              <!-- Columna Descripción & Origen -->
+              <th hlmTh class="min-w-[260px]">Descripción & Origen</th>
+
+              <!-- Columna Estado -->
+              <th hlmTh class="w-36">
+                <button
+                  type="button"
+                  (click)="toggleSort('estado')"
+                  class="flex items-center gap-1.5 font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  <span>Estado</span>
+                  @if (inventarioService.sortField() === 'estado') {
+                    <ng-icon
+                      [name]="inventarioService.sortDirection() === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                      class="size-3 text-primary"
+                    />
+                  } @else {
+                    <ng-icon name="lucideArrowUpDown" class="size-3 text-muted-foreground/60" />
+                  }
+                </button>
+              </th>
+
+              <!-- Columna Fecha Compra -->
+              <th hlmTh class="w-32">
+                <button
+                  type="button"
+                  (click)="toggleSort('fecha_compra')"
+                  class="flex items-center gap-1.5 font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  <span>F. Compra</span>
+                  @if (inventarioService.sortField() === 'fecha_compra') {
+                    <ng-icon
+                      [name]="inventarioService.sortDirection() === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                      class="size-3 text-primary"
+                    />
+                  } @else {
+                    <ng-icon name="lucideArrowUpDown" class="size-3 text-muted-foreground/60" />
+                  }
+                </button>
+              </th>
+
+              <!-- Columna Costo (Solo visible admin) -->
+              @if (authService.isAdmin()) {
+                <th hlmTh class="w-28 text-right">Costo</th>
+              }
+
+              <!-- Columna PVP -->
+              <th hlmTh class="w-28 text-right">
+                <button
+                  type="button"
+                  (click)="toggleSort('pvp')"
+                  class="flex items-center gap-1.5 font-semibold text-foreground hover:text-primary transition-colors cursor-pointer ml-auto"
+                >
+                  <span>PVP</span>
+                  @if (inventarioService.sortField() === 'pvp') {
+                    <ng-icon
+                      [name]="inventarioService.sortDirection() === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                      class="size-3 text-primary"
+                    />
+                  } @else {
+                    <ng-icon name="lucideArrowUpDown" class="size-3 text-muted-foreground/60" />
+                  }
+                </button>
+              </th>
+
+              <!-- Columna Acciones -->
+              <th hlmTh class="w-24 text-right pr-4">Acción</th>
+            </tr>
+          </thead>
+
+          <tbody hlmTBody>
+            <!-- Skeletons durante carga -->
+            @if (inventarioService.isLoading()) {
+              @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+                <tr hlmTr class="animate-pulse">
+                  <td hlmTd><div class="h-5 w-12 bg-muted/60 rounded"></div></td>
+                  <td hlmTd><div class="size-9 bg-muted/60 rounded-md mx-auto"></div></td>
+                  <td hlmTd>
+                    <div class="space-y-1.5">
+                      <div class="h-4 w-3/4 bg-muted/60 rounded"></div>
+                      <div class="h-3 w-1/4 bg-muted/40 rounded"></div>
+                    </div>
+                  </td>
+                  <td hlmTd><div class="h-5 w-20 bg-muted/60 rounded-full"></div></td>
+                  <td hlmTd><div class="h-4 w-16 bg-muted/60 rounded"></div></td>
+                  @if (authService.isAdmin()) {
+                    <td hlmTd><div class="h-4 w-14 bg-muted/60 rounded ml-auto"></div></td>
+                  }
+                  <td hlmTd><div class="h-5 w-16 bg-muted/60 rounded ml-auto"></div></td>
+                  <td hlmTd><div class="h-8 w-16 bg-muted/60 rounded ml-auto"></div></td>
+                </tr>
+              }
+            } @else if (inventarioService.items().length === 0) {
+              <!-- Estado Sin Resultados -->
+              <tr>
+                <td [attr.colspan]="authService.isAdmin() ? 8 : 7" class="text-center py-12 px-4">
+                  <div class="flex flex-col items-center justify-center space-y-3">
+                    <div class="size-12 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground">
+                      <ng-icon name="lucidePackageOpen" class="size-6" />
+                    </div>
+                    <p class="font-medium text-foreground">No se encontraron piezas</p>
+                    <p class="text-xs text-muted-foreground max-w-sm">
+                      No hay artículos que coincidan con los criterios de búsqueda o filtros seleccionados.
+                    </p>
+                    @if (inventarioService.hasActiveFilters()) {
+                      <button
+                        hlmBtn
+                        variant="outline"
+                        size="sm"
+                        (click)="resetAll()"
+                        class="text-xs mt-2"
+                      >
+                        Restablecer filtros
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @else {
+              <!-- Filas de datos -->
+              @for (item of inventarioService.items(); track item.id) {
+                <tr hlmTr class="hover:bg-muted/30 transition-colors group">
+                  <!-- Ref -->
+                  <td hlmTd class="font-mono font-bold text-foreground">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 text-xs text-foreground group-hover:border-primary/40 border border-transparent transition-colors">
+                      #{{ item.ref }}
+                    </span>
+                  </td>
+
+                  <!-- Foto Miniatura -->
+                  <td hlmTd class="text-center">
+                    @if (inventarioService.getItemThumbnail(item); as thumb) {
+                      <img
+                        [src]="thumb"
+                        [alt]="'Pieza ' + item.ref"
+                        class="size-9 rounded-md object-cover border border-border mx-auto shadow-2xs"
+                        loading="lazy"
+                      />
+                    } @else if (item.foto_url) {
+                      <a
+                        [href]="item.foto_url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="size-9 rounded-md bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto hover:bg-primary/20 transition-colors"
+                        title="Ver fotografía externa"
+                      >
+                        <ng-icon name="lucideExternalLink" class="size-3.5" />
+                      </a>
+                    } @else {
+                      <div
+                        class="size-9 rounded-md bg-muted/40 border border-border/50 text-muted-foreground flex items-center justify-center mx-auto"
+                        title="Sin fotografía"
+                      >
+                        <ng-icon name="lucideImage" class="size-3.5 opacity-40" />
+                      </div>
+                    }
+                  </td>
+
+                  <!-- Descripción & Origen -->
+                  <td hlmTd>
+                    <div class="max-w-[420px] space-y-1">
+                      <a
+                        [routerLink]="['/inventario', item.id]"
+                        class="text-sm font-medium text-foreground hover:text-primary transition-colors line-clamp-1 block"
+                        [title]="item.descripcion || 'Sin descripción'"
+                      >
+                        {{ item.descripcion || 'Pieza #' + item.ref }}
+                      </a>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        @if (item.origen) {
+                          <span class="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <ng-icon name="lucideMapPin" class="size-2.5 text-primary/70" />
+                            {{ item.origen }}
+                          </span>
+                        }
+                        @if (item.comentarios) {
+                          <span
+                            class="text-[11px] text-muted-foreground/70 italic truncate max-w-[200px]"
+                            [title]="item.comentarios"
+                          >
+                            • {{ item.comentarios }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Estado -->
+                  <td hlmTd>
+                    <span
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border truncate max-w-[130px]"
+                      [ngClass]="getEstadoClass(item.estado)"
+                      [title]="item.estado || 'Sin estado'"
+                    >
+                      {{ item.estado || '—' }}
+                    </span>
+                  </td>
+
+                  <!-- Fecha Compra -->
+                  <td hlmTd class="text-xs text-muted-foreground">
+                    {{ item.fecha_compra ? (item.fecha_compra | date:'dd/MM/yyyy') : '—' }}
+                  </td>
+
+                  <!-- Costo (Admin) -->
+                  @if (authService.isAdmin()) {
+                    <td hlmTd class="text-right text-xs font-mono text-muted-foreground">
+                      {{ formatCurrency(item.costo) }}
+                    </td>
+                  }
+
+                  <!-- PVP -->
+                  <td hlmTd class="text-right">
+                    <span class="text-sm font-bold font-mono text-foreground">
+                      {{ formatCurrency(item.pvp) }}
+                    </span>
+                  </td>
+
+                  <!-- Acción -->
+                  <td hlmTd class="text-right pr-4">
+                    <a
+                      hlmBtn
+                      variant="outline"
+                      size="sm"
+                      [routerLink]="['/inventario', item.id]"
+                      class="h-8 text-xs font-medium gap-1 px-2.5"
+                    >
+                      <ng-icon name="lucideEye" class="size-3" />
+                      <span>Ficha</span>
+                    </a>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- VISTA 2: CUADRÍCULA DE TARJETAS (CARDS) -->
+  @if (inventarioService.viewMode() === 'grid') {
+    @if (inventarioService.isLoading()) {
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+          <div class="rounded-xl border border-border/70 bg-card p-4 space-y-3 animate-pulse">
+            <div class="h-36 bg-muted/60 rounded-lg"></div>
+            <div class="h-4 w-3/4 bg-muted/60 rounded"></div>
+            <div class="h-3 w-1/2 bg-muted/40 rounded"></div>
+            <div class="h-6 w-1/3 bg-muted/60 rounded"></div>
+          </div>
+        }
+      </div>
+    } @else if (inventarioService.items().length === 0) {
+      <div class="rounded-xl border border-border/80 bg-card p-12 text-center flex flex-col items-center justify-center space-y-3">
+        <div class="size-12 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground">
+          <ng-icon name="lucidePackageOpen" class="size-6" />
+        </div>
+        <p class="font-medium text-foreground">No se encontraron piezas</p>
+        <p class="text-xs text-muted-foreground max-w-sm">
+          No hay artículos que coincidan con los criterios de búsqueda o filtros seleccionados.
+        </p>
+        @if (inventarioService.hasActiveFilters()) {
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            (click)="resetAll()"
+            class="text-xs mt-2"
+          >
+            Restablecer filtros
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        @for (item of inventarioService.items(); track item.id) {
+          <div
+            class="rounded-xl border border-border/80 bg-card hover:border-primary/50 transition-all duration-200 overflow-hidden shadow-2xs hover:shadow-md flex flex-col group"
+          >
+            <!-- Banner / Miniatura Superior -->
+            <div class="relative h-40 bg-gradient-to-br from-card to-muted/60 border-b border-border/60 flex items-center justify-center overflow-hidden">
+              @if (inventarioService.getItemThumbnail(item); as thumb) {
+                <img
+                  [src]="thumb"
+                  [alt]="'Pieza ' + item.ref"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+              } @else {
+                <div class="flex flex-col items-center justify-center text-muted-foreground/60 space-y-1">
+                  <ng-icon name="lucideImage" class="size-8 stroke-[1.5]" />
+                  <span class="text-[11px] font-mono">#{{ item.ref }}</span>
+                </div>
+              }
+
+              <!-- Badges Superpuestos -->
+              <div class="absolute top-2 left-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-background/90 backdrop-blur-md text-xs font-mono font-bold text-foreground border border-border/80 shadow-xs">
+                  #{{ item.ref }}
+                </span>
+              </div>
+
+              <div class="absolute top-2 right-2">
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold backdrop-blur-md border shadow-xs"
+                  [ngClass]="getEstadoClass(item.estado)"
+                >
+                  {{ item.estado || '—' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Contenido de la Tarjeta -->
+            <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+              <div class="space-y-1.5">
+                <a
+                  [routerLink]="['/inventario', item.id]"
+                  class="text-sm font-semibold text-foreground hover:text-primary transition-colors line-clamp-2 block leading-snug"
+                  [title]="item.descripcion || 'Pieza #' + item.ref"
+                >
+                  {{ item.descripcion || 'Pieza de joyería #' + item.ref }}
+                </a>
+
+                <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                  @if (item.origen) {
+                    <span class="flex items-center gap-1 truncate">
+                      <ng-icon name="lucideMapPin" class="size-3 text-primary/80 shrink-0" />
+                      {{ item.origen }}
+                    </span>
+                  }
+                  @if (item.fecha_compra) {
+                    <span class="flex items-center gap-1 shrink-0">
+                      <ng-icon name="lucideCalendar" class="size-3 text-muted-foreground/80 shrink-0" />
+                      {{ item.fecha_compra | date:'yyyy' }}
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <!-- Fila de Precios y Acciones -->
+              <div class="pt-2 border-t border-border/50 flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] text-muted-foreground block uppercase font-medium">PVP</span>
+                  <span class="text-base font-bold font-mono text-foreground">
+                    {{ formatCurrency(item.pvp) }}
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  @if (item.foto_url) {
+                    <a
+                      [href]="item.foto_url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      hlmBtn
+                      variant="ghost"
+                      size="sm"
+                      class="size-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                      title="Abrir fotografía externa"
+                    >
+                      <ng-icon name="lucideExternalLink" class="size-3.5" />
+                    </a>
+                  }
+                  <a
+                    hlmBtn
+                    variant="outline"
+                    size="sm"
+                    [routerLink]="['/inventario', item.id]"
+                    class="h-8 text-xs font-medium px-2.5 gap-1"
+                  >
+                    <ng-icon name="lucideEye" class="size-3" />
+                    <span>Ver</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- Barra de Paginación -->
+  <div class="rounded-xl border border-border/80 bg-card/60 backdrop-blur-md p-3.5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs shadow-xs">
+    <!-- Selector de registros por página y contador -->
+    <div class="flex items-center gap-3 text-muted-foreground">
+      <div class="flex items-center gap-1.5">
+        <span>Mostrar:</span>
+        <select
+          [value]="inventarioService.perPage()"
+          (change)="onPerPageChange($event)"
+          class="h-8 px-2 rounded-md border border-border/80 bg-background text-foreground text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+        >
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </div>
+
+      <span class="hidden sm:inline">•</span>
+
+      <span>
+        Página <strong class="text-foreground">{{ inventarioService.page() }}</strong> de
+        <strong class="text-foreground">{{ inventarioService.totalPages() }}</strong>
+        ({{ inventarioService.totalItems() }} piezas)
+      </span>
+    </div>
+
+    <!-- Botones de Navegación de Página -->
+    <div class="flex items-center gap-1">
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        [disabled]="inventarioService.page() <= 1 || inventarioService.isLoading()"
+        (click)="inventarioService.setPage(1)"
+        class="size-8 p-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        title="Primera página"
+      >
+        <ng-icon name="lucideChevronsLeft" class="size-4" />
+      </button>
+
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        [disabled]="inventarioService.page() <= 1 || inventarioService.isLoading()"
+        (click)="inventarioService.setPage(inventarioService.page() - 1)"
+        class="size-8 p-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        title="Página anterior"
+      >
+        <ng-icon name="lucideChevronLeft" class="size-4" />
+      </button>
+
+      <div class="px-2 font-mono font-medium text-foreground">
+        {{ inventarioService.page() }} / {{ inventarioService.totalPages() }}
+      </div>
+
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        [disabled]="inventarioService.page() >= inventarioService.totalPages() || inventarioService.isLoading()"
+        (click)="inventarioService.setPage(inventarioService.page() + 1)"
+        class="size-8 p-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        title="Página siguiente"
+      >
+        <ng-icon name="lucideChevronRight" class="size-4" />
+      </button>
+
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        [disabled]="inventarioService.page() >= inventarioService.totalPages() || inventarioService.isLoading()"
+        (click)="inventarioService.setPage(inventarioService.totalPages())"
+        class="size-8 p-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        title="Última página"
+      >
+        <ng-icon name="lucideChevronsRight" class="size-4" />
+      </button>
     </div>
   </div>
 </section>

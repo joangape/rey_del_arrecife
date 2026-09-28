@@ -16,7 +16,7 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
 [Fase 3: Frontend Foundation & Design System (Spartan UI)] ✅ COMPLETADO
                │
                ▼
-[Fase 4: Módulo de Inventario (Catálogo & Ficha Comercial)] 🔄 SIGUIENTE ENFOQUE
+[Fase 4: Módulo de Inventario (Catálogo & Ficha Comercial)] 🔄 EN CURSO (4.1 LISTO)
                │
                ▼
 [Fase 5: Módulo de Gastos Extra & Liquidaciones]
@@ -104,12 +104,13 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
 ## 📌 Fase 4: Módulo de Inventario
 > **Objetivo**: Desarrollar la interfaz comercial de consulta, búsqueda, filtros y edición de piezas.
 
-- [ ] **4.1 Vista de Catálogo / Tabla (`/inventario`)**:
-  - [ ] Tabla interactiva (Spartan Table) con ordenación por `ref`, `pvp`, `fecha_compra`, `estado`.
-  - [ ] Buscador global (búsqueda por número de referencia, palabras clave en descripción y origen).
-  - [ ] Filtros rápidos por Estado (`Disponible`, `AEM`, `VyP`, etc.) y por Origen.
-  - [ ] Paginación o scroll virtual optimizado para +300 artículos.
-  - [ ] Vista alternativa en cuadrícula de tarjetas (*Cards view*) con foto principal y datos clave.
+- [x] **4.1 Vista de Catálogo / Tabla (`/inventario`)**:
+  - [x] Tabla interactiva (Spartan Table) con ordenación por `ref`, `pvp`, `fecha_compra`, `estado`.
+  - [x] Buscador global (búsqueda por número de referencia, palabras clave en descripción y origen).
+  - [x] Filtros rápidos por Estado (`Disponible`, `En sobre`, `AEM`, `VyP`, etc.) y por Origen.
+  - [x] Paginación optimizada para +300 artículos con selector configurable de elementos por página.
+  - [x] Vista alternativa en cuadrícula de tarjetas (*Cards view*) con foto principal y datos clave.
+  - [x] Servicio reactivo `InventarioService` con Signals, cliente PocketBase y suite de pruebas unitarias al 100%.
 - [ ] **4.2 Ficha de Detalle y Edición de Pieza (`/inventario/:id`)**:
   - [ ] Visualización completa de metadatos de la pieza.
   - [ ] **Control de visibilidad y edición por rol**:
