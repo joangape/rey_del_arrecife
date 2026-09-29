@@ -38,8 +38,8 @@ Almacena las piezas catalogadas con su información comercial, trazabilidad y es
 | `fecha_venta` | Text/Date | `F. Venta` | Fecha en que se vendió el artículo (o indicación de estado) |
 | `fecha_pagado` | Text/Date | `F. Pagado` | Fecha en que se cobró/pagó |
 | `estado` | Text | `Estado` | Ej: `AEM`, `VyP`, `VyP 30.03.2023`, `En Sobre 21/5/25`, `Berlin` |
-| `foto_url` | URL | `Foto` | Enlace externo a foto (ej: álbumes compartidos de Google Photos) |
-| `fotos` | File (Múltiple)| - | Archivos de imagen cargados directamente a PocketBase |
+| `foto_url` | URL | `Foto` | *⚠️ Deprecado (campo histórico)*: Enlaces antiguos a álbumes de Google Photos. No consumido por el frontend |
+| `fotos` | File (Múltiple)| - | **Fuente única de verdad**: Archivos de imagen persistidos en PocketBase (`pb_data/storage`), miniaturas automáticas (`100x100`) y visualización en galería |
 | `comentarios` | Text | `Comentarios` | Observaciones adicionales o notas privadas |
 
 ---
@@ -65,4 +65,4 @@ Registra cualquier gasto suplementario (enfilado, arreglo, transporte, etc.) aso
 Durante la importación de los ficheros CSV históricos:
 1. **Monedas**: Los valores como `700€`, `40.00€`, `0€` se limpian de sufijos y se convierten a números decimales en punto flotante (`700.00`, `40.00`).
 2. **Fechas**: Se normaliza el formato europeo `DD/MM/AAAA` al estándar ISO `YYYY-MM-DD`. En campos como `F. Venta` donde a veces aparece texto (`Pagado`), se almacena la cadena o se deriva la fecha correspondiente.
-3. **Enlaces de Fotos**: Se preservan los enlaces originales a Google Photos (`https://photos.app.goo.gl/...` o `https://photos.google.com/...`) en el campo `foto_url`. Se ofrece además el campo nativo `fotos` para adjuntar nuevas imágenes tomadas con cámara o dispositivo móvil.
+3. **Fotografías y Almacenamiento Local**: Todas las fotografías históricas fueron extraídas y descargadas a máxima resolución mediante el motor de sincronización (`npm run sync:photos`), almacenándose de forma permanente en el campo nativo `fotos` de PocketBase y con copia determinista en disco local (`backend/data/photos/ref_<REF>_<ID>.jpg`). El frontend se encuentra 100% desacoplado de Google Photos. El campo `foto_url` se conserva únicamente para fines de auditoría y trazabilidad histórica.

@@ -46,7 +46,13 @@ Este comando procesará los dos ficheros de la raíz:
 - `Mis Corales - Rey del Arrecife sevillano SL - Inventario.csv`
 - `Mis Corales - Rey del Arrecife sevillano SL - Gastos extra.csv`
 
-### 3. Iniciar el Frontend Angular
+### 3. Sincronizar y descargar fotografías a PocketBase
+```bash
+make sync-photos
+```
+Descarga las fotos de Google Photos en alta resolución, crea respaldo local en `backend/data/photos/` y las almacena en la colección `inventario`.
+
+### 4. Iniciar el Frontend Angular
 ```bash
 make dev
 ```

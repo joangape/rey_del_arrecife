@@ -57,10 +57,19 @@ describe('InventarioListComponent', () => {
         { label: 'En sobre', value: 'En sobre' },
         { label: 'AEM', value: 'AEM' },
       ],
+      filterVendido: signal<'all' | 'vendido' | 'no_vendido'>('all'),
+      filterPagado: signal<'all' | 'pagado' | 'no_pagado'>('all'),
+      isTodosActive: signal<boolean>(true),
       hasActiveFilters: signal<boolean>(false),
       totalPvpCurrentPage: signal<number>(720),
       setSearch: vi.fn(),
       setEstado: vi.fn(),
+      setFilterVendido: vi.fn(),
+      toggleFilterVendido: vi.fn(),
+      setFilterPagado: vi.fn(),
+      toggleFilterPagado: vi.fn(),
+      togglePredefinedEstado: vi.fn(),
+      setTodos: vi.fn(),
       setOrigen: vi.fn(),
       setSort: vi.fn(),
       setPage: vi.fn(),
@@ -124,6 +133,43 @@ describe('InventarioListComponent', () => {
   it('should call setEstado when clicking quick estado button', () => {
     component.onEstadoClick('En sobre');
     expect(mockInventarioService.setEstado).toHaveBeenCalledWith('En sobre');
+  });
+
+  it('should call setTodos when clicking Todos button', () => {
+    component.onTodosClick();
+    expect(mockInventarioService.setTodos).toHaveBeenCalled();
+  });
+
+  it('should call toggleFilterVendido when clicking Vendidos button', () => {
+    component.onVendidoClick();
+    expect(mockInventarioService.toggleFilterVendido).toHaveBeenCalled();
+  });
+
+  it('should call toggleFilterPagado when clicking Pagados button', () => {
+    component.onPagadoClick();
+    expect(mockInventarioService.toggleFilterPagado).toHaveBeenCalled();
+  });
+
+  it('should call togglePredefinedEstado when clicking AEM or Berlin', () => {
+    component.onEstadoPredefinidoClick('AEM');
+    expect(mockInventarioService.togglePredefinedEstado).toHaveBeenCalledWith('AEM');
+
+    component.onEstadoPredefinidoClick('Berlin');
+    expect(mockInventarioService.togglePredefinedEstado).toHaveBeenCalledWith('Berlin');
+  });
+
+  it('should generate appropriate titles for Vendidos and Pagados chips', () => {
+    expect(component.getVendidoTitle()).toContain('desactivado');
+    mockInventarioService.filterVendido.set('vendido');
+    expect(component.getVendidoTitle()).toContain('Vendidos (con fecha de venta)');
+    mockInventarioService.filterVendido.set('no_vendido');
+    expect(component.getVendidoTitle()).toContain('No Vendidos');
+
+    expect(component.getPagadoTitle()).toContain('desactivado');
+    mockInventarioService.filterPagado.set('pagado');
+    expect(component.getPagadoTitle()).toContain('Pagados (con fecha de pago)');
+    mockInventarioService.filterPagado.set('no_pagado');
+    expect(component.getPagadoTitle()).toContain('No Pagados');
   });
 
   it('should call setOrigen when changing origen dropdown', () => {

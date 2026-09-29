@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { InventarioFilter, InventarioItem } from '../models/inventario.model';
+import { InventarioFilter, InventarioItem, PagadoFilter, VendidoFilter } from '../models/inventario.model';
 import { PocketBaseService } from './pocketbase.service';
 
 export type SortDirection = 'asc' | 'desc';
@@ -22,6 +22,8 @@ export class InventarioService {
   readonly searchQuery = signal<string>('');
   readonly selectedEstado = signal<string>('all');
   readonly selectedOrigen = signal<string>('all');
+  readonly filterVendido = signal<VendidoFilter>('all');
+  readonly filterPagado = signal<PagadoFilter>('all');
   readonly sortField = signal<string>('ref');
   readonly sortDirection = signal<SortDirection>('asc');
   readonly viewMode = signal<ViewMode>('table');
@@ -46,7 +48,16 @@ export class InventarioService {
     () =>
       this.searchQuery().trim().length > 0 ||
       this.selectedEstado() !== 'all' ||
-      this.selectedOrigen() !== 'all'
+      this.selectedOrigen() !== 'all' ||
+      this.filterVendido() !== 'all' ||
+      this.filterPagado() !== 'all'
+  );
+
+  readonly isTodosActive = computed(
+    () =>
+      this.selectedEstado() === 'all' &&
+      this.filterVendido() === 'all' &&
+      this.filterPagado() === 'all'
   );
 
   readonly totalPvpCurrentPage = computed(() =>
@@ -102,6 +113,18 @@ export class InventarioService {
 
       if (origen !== 'all') {
         filterClauses.push(`origen = "${origen}"`);
+      }
+
+      if (this.filterVendido() === 'vendido') {
+        filterClauses.push('(fecha_venta != "" && fecha_venta != null)');
+      } else if (this.filterVendido() === 'no_vendido') {
+        filterClauses.push('(fecha_venta = "" || fecha_venta = null)');
+      }
+
+      if (this.filterPagado() === 'pagado') {
+        filterClauses.push('(fecha_pagado != "" && fecha_pagado != null)');
+      } else if (this.filterPagado() === 'no_pagado') {
+        filterClauses.push('(fecha_pagado = "" || fecha_pagado = null)');
       }
 
       const sortPrefix = this.sortDirection() === 'desc' ? '-' : '+';
@@ -186,6 +209,71 @@ export class InventarioService {
   }
 
   /**
+   * Actualiza o alterna el filtro de vendidos (tri-estado: 'all' -> 'vendido' -> 'no_vendido' -> 'all').
+   */
+  setFilterVendido(val: VendidoFilter): void {
+    if (this.filterVendido() === val) return;
+    this.filterVendido.set(val);
+    this.page.set(1);
+    this.loadItems();
+  }
+
+  toggleFilterVendido(): void {
+    const current = this.filterVendido();
+    const next: VendidoFilter =
+      current === 'all' ? 'vendido' : current === 'vendido' ? 'no_vendido' : 'all';
+    this.setFilterVendido(next);
+  }
+
+  /**
+   * Actualiza o alterna el filtro de pagados (tri-estado: 'all' -> 'pagado' -> 'no_pagado' -> 'all').
+   */
+  setFilterPagado(val: PagadoFilter): void {
+    if (this.filterPagado() === val) return;
+    this.filterPagado.set(val);
+    this.page.set(1);
+    this.loadItems();
+  }
+
+  toggleFilterPagado(): void {
+    const current = this.filterPagado();
+    const next: PagadoFilter =
+      current === 'all' ? 'pagado' : current === 'pagado' ? 'no_pagado' : 'all';
+    this.setFilterPagado(next);
+  }
+
+  /**
+   * Alterna un filtro predefinido por estado exacto ('AEM' o 'Berlin').
+   */
+  togglePredefinedEstado(estado: 'AEM' | 'Berlin'): void {
+    const current = this.selectedEstado();
+    this.setEstado(current === estado ? 'all' : estado);
+  }
+
+  /**
+   * Restablece los filtros predefinidos rápidos (Vendidos, Pagados, Estados) a 'all'.
+   */
+  setTodos(): void {
+    let changed = false;
+    if (this.selectedEstado() !== 'all') {
+      this.selectedEstado.set('all');
+      changed = true;
+    }
+    if (this.filterVendido() !== 'all') {
+      this.filterVendido.set('all');
+      changed = true;
+    }
+    if (this.filterPagado() !== 'all') {
+      this.filterPagado.set('all');
+      changed = true;
+    }
+    if (changed) {
+      this.page.set(1);
+      this.loadItems();
+    }
+  }
+
+  /**
    * Actualiza el filtro de origen y reinicia a la página 1.
    */
   setOrigen(origen: string): void {
@@ -247,6 +335,8 @@ export class InventarioService {
     this.searchQuery.set('');
     this.selectedEstado.set('all');
     this.selectedOrigen.set('all');
+    this.filterVendido.set('all');
+    this.filterPagado.set('all');
     this.sortField.set('ref');
     this.sortDirection.set('asc');
     this.page.set(1);

@@ -138,6 +138,133 @@ describe('InventarioService', () => {
     });
   });
 
+  it('should toggle filterVendido across three states (vendido, no_vendido, all)', async () => {
+    // 1er clic: vendido
+    service.toggleFilterVendido();
+    expect(service.filterVendido()).toBe('vendido');
+    await vi.waitFor(() => {
+      expect(getListSpy).toHaveBeenCalledWith(
+        1,
+        25,
+        expect.objectContaining({
+          filter: '(fecha_venta != "" && fecha_venta != null)',
+        })
+      );
+    });
+
+    // 2do clic: no_vendido
+    service.toggleFilterVendido();
+    expect(service.filterVendido()).toBe('no_vendido');
+    await vi.waitFor(() => {
+      expect(getListSpy).toHaveBeenCalledWith(
+        1,
+        25,
+        expect.objectContaining({
+          filter: '(fecha_venta = "" || fecha_venta = null)',
+        })
+      );
+    });
+
+    // 3er clic: all (desactivado)
+    service.toggleFilterVendido();
+    expect(service.filterVendido()).toBe('all');
+    await vi.waitFor(() => {
+      expect(getListSpy).toHaveBeenCalledWith(
+        1,
+        25,
+        expect.objectContaining({
+          filter: undefined,
+        })
+      );
+    });
+  });
+
+  it('should toggle filterPagado across three states (pagado, no_pagado, all)', async () => {
+    // 1er clic: pagado
+    service.toggleFilterPagado();
+    expect(service.filterPagado()).toBe('pagado');
+    await vi.waitFor(() => {
+      expect(getListSpy).toHaveBeenCalledWith(
+        1,
+        25,
+        expect.objectContaining({
+          filter: '(fecha_pagado != "" && fecha_pagado != null)',
+        })
+      );
+    });
+
+    // 2do clic: no_pagado
+    service.toggleFilterPagado();
+    expect(service.filterPagado()).toBe('no_pagado');
+    await vi.waitFor(() => {
+      expect(getListSpy).toHaveBeenCalledWith(
+        1,
+        25,
+        expect.objectContaining({
+          filter: '(fecha_pagado = "" || fecha_pagado = null)',
+        })
+      );
+    });
+
+    // 3er clic: all (desactivado)
+    service.toggleFilterPagado();
+    expect(service.filterPagado()).toBe('all');
+    await vi.waitFor(() => {
+      expect(getListSpy).toHaveBeenCalledWith(
+        1,
+        25,
+        expect.objectContaining({
+          filter: undefined,
+        })
+      );
+    });
+  });
+
+  it('should toggle predefined estados AEM and Berlin', async () => {
+    service.togglePredefinedEstado('AEM');
+    expect(service.selectedEstado()).toBe('AEM');
+
+    await vi.waitFor(() => {
+      expect(getListSpy).toHaveBeenCalledWith(
+        1,
+        25,
+        expect.objectContaining({
+          filter: 'estado ~ "AEM"',
+        })
+      );
+    });
+
+    // Al pulsar el mismo, conmuta a 'all'
+    service.togglePredefinedEstado('AEM');
+    expect(service.selectedEstado()).toBe('all');
+
+    // Al pulsar Berlin, activa Berlin
+    service.togglePredefinedEstado('Berlin');
+    expect(service.selectedEstado()).toBe('Berlin');
+    await vi.waitFor(() => {
+      expect(getListSpy).toHaveBeenCalledWith(
+        1,
+        25,
+        expect.objectContaining({
+          filter: 'estado ~ "Berlin"',
+        })
+      );
+    });
+  });
+
+  it('should reset predefined filters when calling setTodos', async () => {
+    service.setFilterVendido('vendido');
+    service.setFilterPagado('no_pagado');
+    service.setEstado('AEM');
+    expect(service.isTodosActive()).toBe(false);
+
+    service.setTodos();
+    expect(service.filterVendido()).toBe('all');
+    expect(service.filterPagado()).toBe('all');
+    expect(service.selectedEstado()).toBe('all');
+    expect(service.isTodosActive()).toBe(true);
+  });
+
   it('should toggle sort field and direction', async () => {
     // Primera llamada para ordenar por pvp -> asc
     service.setSort('pvp');

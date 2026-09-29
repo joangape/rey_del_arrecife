@@ -28,10 +28,15 @@ export interface InventarioItem {
   updated?: string;
 }
 
+export type VendidoFilter = 'all' | 'vendido' | 'no_vendido';
+export type PagadoFilter = 'all' | 'pagado' | 'no_pagado';
+
 export interface InventarioFilter {
   query?: string;
   estado?: string;
   origen?: string;
+  vendido?: VendidoFilter;
+  pagado?: PagadoFilter;
   sort?: string;
   page?: number;
   perPage?: number;

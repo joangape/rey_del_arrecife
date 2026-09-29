@@ -126,27 +126,118 @@
       </div>
     </div>
 
-    <!-- Chips Rápidos de Estado -->
+    <!-- Chips Rápidos de Filtros Predefinidos -->
     <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar text-xs">
       <span class="text-muted-foreground flex items-center gap-1 pr-1 font-medium">
-        <ng-icon name="lucideTag" class="size-3" />
-        Estado:
+        <ng-icon name="lucideSlidersHorizontal" class="size-3" />
+        Filtros:
       </span>
-      @for (item of inventarioService.quickEstados; track item.value) {
-        <button
-          type="button"
-          (click)="onEstadoClick(item.value)"
-          [class.bg-primary]="inventarioService.selectedEstado() === item.value"
-          [class.text-primary-foreground]="inventarioService.selectedEstado() === item.value"
-          [class.border-primary]="inventarioService.selectedEstado() === item.value"
-          [class.bg-muted/40]="inventarioService.selectedEstado() !== item.value"
-          [class.text-muted-foreground]="inventarioService.selectedEstado() !== item.value"
-          [class.border-border/60]="inventarioService.selectedEstado() !== item.value"
-          class="px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap transition-all cursor-pointer hover:border-primary/50 hover:text-foreground"
-        >
-          {{ item.label }}
-        </button>
-      }
+
+      <!-- Todos -->
+      <button
+        type="button"
+        (click)="onTodosClick()"
+        [class.bg-primary]="inventarioService.isTodosActive()"
+        [class.text-primary-foreground]="inventarioService.isTodosActive()"
+        [class.border-primary]="inventarioService.isTodosActive()"
+        [class.bg-muted/40]="!inventarioService.isTodosActive()"
+        [class.text-muted-foreground]="!inventarioService.isTodosActive()"
+        [class.border-border/60]="!inventarioService.isTodosActive()"
+        class="px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap transition-all cursor-pointer hover:border-primary/50 hover:text-foreground"
+        title="Mostrar todas las piezas sin filtros predefinidos"
+      >
+        Todos
+      </button>
+
+      <!-- Vendidos: tres estados (vendido, no vendido, desactivado) -->
+      <button
+        type="button"
+        (click)="onVendidoClick()"
+        [class.bg-emerald-500/15]="inventarioService.filterVendido() === 'vendido'"
+        [class.text-emerald-700]="inventarioService.filterVendido() === 'vendido'"
+        [class.dark:text-emerald-300]="inventarioService.filterVendido() === 'vendido'"
+        [class.border-emerald-500/40]="inventarioService.filterVendido() === 'vendido'"
+        [class.bg-amber-500/15]="inventarioService.filterVendido() === 'no_vendido'"
+        [class.text-amber-700]="inventarioService.filterVendido() === 'no_vendido'"
+        [class.dark:text-amber-300]="inventarioService.filterVendido() === 'no_vendido'"
+        [class.border-amber-500/40]="inventarioService.filterVendido() === 'no_vendido'"
+        [class.bg-muted/40]="inventarioService.filterVendido() === 'all'"
+        [class.text-muted-foreground]="inventarioService.filterVendido() === 'all'"
+        [class.border-border/60]="inventarioService.filterVendido() === 'all'"
+        class="px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap transition-all cursor-pointer hover:border-primary/50 hover:text-foreground inline-flex items-center gap-1.5"
+        [title]="getVendidoTitle()"
+      >
+        @if (inventarioService.filterVendido() === 'vendido') {
+          <ng-icon name="lucideCheck" class="size-3 text-emerald-600 dark:text-emerald-400" />
+          <span>Vendidos: Sí</span>
+        } @else if (inventarioService.filterVendido() === 'no_vendido') {
+          <ng-icon name="lucideX" class="size-3 text-amber-600 dark:text-amber-400" />
+          <span>Vendidos: No</span>
+        } @else {
+          <span>Vendidos</span>
+        }
+      </button>
+
+      <!-- Pagados: tres estados (pagado, no pagado, desactivado) -->
+      <button
+        type="button"
+        (click)="onPagadoClick()"
+        [class.bg-emerald-500/15]="inventarioService.filterPagado() === 'pagado'"
+        [class.text-emerald-700]="inventarioService.filterPagado() === 'pagado'"
+        [class.dark:text-emerald-300]="inventarioService.filterPagado() === 'pagado'"
+        [class.border-emerald-500/40]="inventarioService.filterPagado() === 'pagado'"
+        [class.bg-amber-500/15]="inventarioService.filterPagado() === 'no_pagado'"
+        [class.text-amber-700]="inventarioService.filterPagado() === 'no_pagado'"
+        [class.dark:text-amber-300]="inventarioService.filterPagado() === 'no_pagado'"
+        [class.border-amber-500/40]="inventarioService.filterPagado() === 'no_pagado'"
+        [class.bg-muted/40]="inventarioService.filterPagado() === 'all'"
+        [class.text-muted-foreground]="inventarioService.filterPagado() === 'all'"
+        [class.border-border/60]="inventarioService.filterPagado() === 'all'"
+        class="px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap transition-all cursor-pointer hover:border-primary/50 hover:text-foreground inline-flex items-center gap-1.5"
+        [title]="getPagadoTitle()"
+      >
+        @if (inventarioService.filterPagado() === 'pagado') {
+          <ng-icon name="lucideCheck" class="size-3 text-emerald-600 dark:text-emerald-400" />
+          <span>Pagados: Sí</span>
+        } @else if (inventarioService.filterPagado() === 'no_pagado') {
+          <ng-icon name="lucideX" class="size-3 text-amber-600 dark:text-amber-400" />
+          <span>Pagados: No</span>
+        } @else {
+          <span>Pagados</span>
+        }
+      </button>
+
+      <!-- AEM -->
+      <button
+        type="button"
+        (click)="onEstadoPredefinidoClick('AEM')"
+        [class.bg-primary]="inventarioService.selectedEstado() === 'AEM'"
+        [class.text-primary-foreground]="inventarioService.selectedEstado() === 'AEM'"
+        [class.border-primary]="inventarioService.selectedEstado() === 'AEM'"
+        [class.bg-muted/40]="inventarioService.selectedEstado() !== 'AEM'"
+        [class.text-muted-foreground]="inventarioService.selectedEstado() !== 'AEM'"
+        [class.border-border/60]="inventarioService.selectedEstado() !== 'AEM'"
+        class="px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap transition-all cursor-pointer hover:border-primary/50 hover:text-foreground"
+        title="Filtrar por estado AEM"
+      >
+        AEM
+      </button>
+
+      <!-- Berlin -->
+      <button
+        type="button"
+        (click)="onEstadoPredefinidoClick('Berlin')"
+        [class.bg-primary]="inventarioService.selectedEstado() === 'Berlin'"
+        [class.text-primary-foreground]="inventarioService.selectedEstado() === 'Berlin'"
+        [class.border-primary]="inventarioService.selectedEstado() === 'Berlin'"
+        [class.bg-muted/40]="inventarioService.selectedEstado() !== 'Berlin'"
+        [class.text-muted-foreground]="inventarioService.selectedEstado() !== 'Berlin'"
+        [class.border-border/60]="inventarioService.selectedEstado() !== 'Berlin'"
+        class="px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap transition-all cursor-pointer hover:border-primary/50 hover:text-foreground"
+        title="Filtrar por estado Berlin"
+      >
+        Berlin
+      </button>
     </div>
   </div>
 

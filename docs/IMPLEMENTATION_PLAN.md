@@ -25,6 +25,9 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
 [Fase 6: Portal de Administración de Usuarios & Invitaciones] ✅ COMPLETADO
                │
                ▼
+[Hito Especial: Migración Fotos Google a PocketBase Local] ✅ COMPLETADO
+               │
+               ▼
 [Fase 7: Despliegue & Validación en Synology NAS Container Manager]
 ```
 
@@ -215,6 +218,27 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
     - [x] Validación visual de las protecciones de seguridad en la fila del administrador actual.
   - [x] Verificación de suite de pruebas unitarias (20 suites, 171 tests pasando al 100%).
   - [x] Verificación del build de producción de Angular (`npm run build`).
+
+---
+
+## 📌 Hito Especial: Migración de Fotografías a Almacenamiento Local
+> **Objetivo**: Descarga masiva, persistencia determinista y desacoplamiento integral de Google Photos en favor del almacenamiento nativo de PocketBase. Plan detallado en [PLAN_MIGRACION_FOTOS.md](file:///Users/josegarces/Coding_projects/rey_del_arrecife/docs/PLAN_MIGRACION_FOTOS.md).
+
+- [x] **Motor de Extracción y Resiliencia (`backend/scripts/sync_google_photos.js`)**:
+  - [x] Resolución HTTP de redirecciones de álbumes cortos (`photos.app.goo.gl`) y extracción de CDN de alta fidelidad (`=w1600`).
+  - [x] Backup determinista en disco local (`backend/data/photos/ref_<REF>_<ID>.jpg`).
+  - [x] Subida automática en binario a colección PocketBase (`fotos`).
+  - [x] Control de concurrencia (delay de cortesía) y reintentos automáticos con backoff exponencial.
+  - [x] 293 fotografías descargadas y asociadas con éxito (7 enlaces origen rotos/vacíos registrados en `backend/logs/sync_photos_failed.json`).
+  - [x] Generación automática de miniaturas `100x100` en PocketBase.
+- [x] **Desacoplamiento Integral en Frontend**:
+  - [x] Catálogo (`inventario-list`): Miniaturas exclusivas vía `getItemThumbnail(item)`, eliminación de enlaces externos a Google Photos y badges obsoletos.
+  - [x] Ficha de detalle (`inventario-detail`): Simplificación de `allPhotos()`, retirada del campo `foto_url` de formularios y títulos descriptivos en modal Lightbox.
+  - [x] Gastos (`gastos-list`): Actualización de `getPieceThumbnail()` para resolver miniaturas únicamente mediante `fotos` de PocketBase.
+  - [x] Modelo y servicio (`inventario.model.ts` y `inventario.service.ts`): Deprecación formal de `foto_url` y `hasExternalPhoto()`.
+- [x] **Calidad y Validación**:
+  - [x] 100% de tests unitarios de frontend (171/171) y backend (32/32) pasando exitosamente.
+  - [x] Build de producción de Angular verificado sin errores.
 
 ---
 

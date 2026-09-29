@@ -7,6 +7,7 @@ import {
   lucideArrowUp,
   lucideArrowUpDown,
   lucideCalendar,
+  lucideCheck,
   lucideChevronLeft,
   lucideChevronRight,
   lucideChevronsLeft,
@@ -21,6 +22,7 @@ import {
   lucidePackageOpen,
   lucideRotateCcw,
   lucideSearch,
+  lucideSlidersHorizontal,
   lucideSparkles,
   lucideTag,
   lucideX,
@@ -50,7 +52,9 @@ import { InventarioService, ViewMode } from '../../../core/services/inventario.s
   providers: [
     provideIcons({
       lucideSearch,
+      lucideSlidersHorizontal,
       lucideX,
+      lucideCheck,
       lucideFilter,
       lucideArrowUpDown,
       lucideArrowUp,
@@ -89,8 +93,46 @@ export class InventarioListComponent {
     this.inventarioService.setSearch('');
   }
 
+  onTodosClick(): void {
+    this.inventarioService.setTodos();
+  }
+
+  onVendidoClick(): void {
+    this.inventarioService.toggleFilterVendido();
+  }
+
+  onPagadoClick(): void {
+    this.inventarioService.toggleFilterPagado();
+  }
+
+  onEstadoPredefinidoClick(estado: 'AEM' | 'Berlin'): void {
+    this.inventarioService.togglePredefinedEstado(estado);
+  }
+
   onEstadoClick(estado: string): void {
     this.inventarioService.setEstado(estado);
+  }
+
+  getVendidoTitle(): string {
+    const v = this.inventarioService.filterVendido();
+    if (v === 'vendido') {
+      return 'Filtro activo: Vendidos (con fecha de venta). Clic para filtrar No Vendidos.';
+    }
+    if (v === 'no_vendido') {
+      return 'Filtro activo: No Vendidos (sin fecha de venta). Clic para desactivar filtro.';
+    }
+    return 'Filtrar por vendidos (desactivado). Clic para filtrar Vendidos.';
+  }
+
+  getPagadoTitle(): string {
+    const p = this.inventarioService.filterPagado();
+    if (p === 'pagado') {
+      return 'Filtro activo: Pagados (con fecha de pago). Clic para filtrar No Pagados.';
+    }
+    if (p === 'no_pagado') {
+      return 'Filtro activo: No Pagados (sin fecha de pago). Clic para desactivar filtro.';
+    }
+    return 'Filtrar por pagados (desactivado). Clic para filtrar Pagados.';
   }
 
   onOrigenChange(event: Event): void {

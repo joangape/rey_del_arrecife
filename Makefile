@@ -30,6 +30,10 @@ seed: ## Ejecuta la importación y migración de los datos de los CSV histórico
 	@echo "$(CYAN)Importando datos de CSVs a PocketBase...$(RESET)"
 	@cd backend && npm install && npm run seed
 
+sync-photos: ## Descarga las fotos de Google Photos y las almacena localmente en PocketBase
+	@echo "$(CYAN)Descargando y sincronizando fotos en PocketBase...$(RESET)"
+	@cd backend && npm run sync:photos
+
 migrate: ## Ejecuta las migraciones de PocketBase pendientes
 	@echo "$(CYAN)Aplicando migraciones de PocketBase...$(RESET)"
 	@cd backend && npm run migrate:up

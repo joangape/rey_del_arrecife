@@ -31,6 +31,9 @@ make backend-down
 # Importar y migrar los datos históricos de los CSV a PocketBase
 make seed
 
+# Sincronizar y descargar fotografías de Google Photos al almacenamiento nativo local
+make sync-photos
+
 # Ejecutar las pruebas de integración del hook de autenticación OAuth2 Whitelist
 make test-auth
 
@@ -55,7 +58,7 @@ Para la configuración de Google Cloud y OAuth2, consulta la [Guía de Configura
 
 ---
 
-## 4. Inicialización y Carga de Datos (Seed)
+## 4. Inicialización, Carga de Datos (Seed) y Fotos
 
 La primera vez que levantes el backend:
 
@@ -68,10 +71,19 @@ La primera vez que levantes el backend:
    ```bash
    make seed
    ```
-4. El script:
-   - Creará / verificará las colecciones `inventario` y `gastos_extra`.
-   - Limpiará y formateará los datos (fechas, monedas, enlaces).
-   - Relacionará los registros de gastos con las piezas correspondientes.
+   El script creará/verificará las colecciones, limpiará los datos e importará las piezas y gastos extra.
+
+4. Ejecuta la descarga y sincronización de fotografías:
+   ```bash
+   make sync-photos
+   # O alternativamente: cd backend && npm run sync:photos
+   ```
+   Este script:
+   - Descarga cada imagen de los álbumes compartidos de Google Photos en alta resolución (`=w1600`).
+   - Guarda una copia de respaldo limpia y determinista en `backend/data/photos/ref_<REF>_<ID>.jpg`.
+   - Adjunta el archivo binario directamente al registro en el campo nativo `fotos` de PocketBase.
+   - Es idempotente: si una pieza ya cuenta con archivos en `fotos`, la omite automáticamente.
+   - Genera logs detallados en `backend/logs/sync_photos.log`.
 
 ---
 
