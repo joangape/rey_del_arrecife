@@ -22,7 +22,7 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
 [Fase 5: Módulo de Gastos Extra & Liquidaciones] ✅ COMPLETADO
                │
                ▼
-[Fase 6: Portal de Administración de Usuarios & Invitaciones]
+[Fase 6: Portal de Administración de Usuarios & Invitaciones] ✅ COMPLETADO
                │
                ▼
 [Fase 7: Despliegue & Validación en Synology NAS Container Manager]
@@ -161,14 +161,60 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
 ---
 
 ## 📌 Fase 6: Gestión de Usuarios & Invitaciones (Admin Portal)
-> **Objetivo**: Permitir al administrador invitar colaboradores y gestionar el acceso a la plataforma.
+> **Objetivo**: Desarrollar el portal de administración para gestionar el acceso a la plataforma, invitar colaboradores con Google OAuth2 / contraseña y controlar roles con salvaguardas de seguridad.
 
-- [ ] **6.1 Pantalla de Usuarios (`/admin/usuarios`)**:
-  - [ ] Acceso protegido exclusivo para rol `admin`.
-  - [ ] Listado de usuarios autorizados con email, rol, estado (activo/inactivo) y fecha de creación.
-- [ ] **6.2 Formulario de Invitación / Alta**:
-  - [ ] Modal para autorizar un nuevo correo de Google y asignarle rol (`partner` o `admin`).
-  - [ ] Activar o revocar acceso de un usuario con un toggle.
+- [x] **6.1 Servicio Reactivo `UsersService` (`src/app/core/services/users.service.ts`)**:
+  - [x] Estado reactivo basado en Angular Signals (`users`, `isLoading`, `searchQuery`, `roleFilter`, `statusFilter`).
+  - [x] Lista computada (`filteredUsers`) con filtrado dinámico por texto (nombre, email), rol (`all`, `admin`, `partner`) y estado (`all`, `active`, `inactive`).
+  - [x] Métodos CRUD y de control de acceso:
+    - [x] `loadUsers()`: Consulta bajo demanda de la lista completa de usuarios autorizados ordenada por fecha de creación descendente.
+    - [x] `createUser(data)`: Alta de nuevo usuario autorizando su correo para Google OAuth2; genera de fondo una contraseña aleatoria criptográfica o aplica la contraseña manual provista. Dispara `requestVerification(email)` para notificar al usuario.
+    - [x] `updateUser(id, data)`: Actualización de datos del usuario (nombre, rol, correo, contraseña opcional).
+    - [x] `toggleUserActive(id, active)`: Conmutación inmediata del estado activo/inactivo con guardas de auto-protección.
+    - [x] `deleteUser(id)`: Eliminación de usuario en PocketBase con comprobación preventiva de auto-eliminación.
+    - [x] `resendVerificationEmail(email)`: Reenvío bajo demanda del correo de verificación nativo de PocketBase.
+  - [x] Suite de pruebas unitarias (`users.service.spec.ts`) cubriendo filtrado, CRUD, auto-protección y manejo de errores al 100%.
+
+- [x] **6.2 Diálogo Modal Unificado de Alta y Edición (`UserFormDialogComponent`)**:
+  - [x] Diálogo modal (`HlmDialog`) estilizado con Spartan UI y tokens de diseño (*Deep Marine* / *Clean Marine*).
+  - [x] Modo dual reactivo: **Invitar / Alta de Usuario** vs **Editar Colaborador**.
+  - [x] Campos del formulario:
+    - [x] `email`: Correo de la cuenta de Google / usuario (obligatorio, validación de formato).
+    - [x] `name`: Nombre y apellidos (opcional en alta, autocompletado en el primer login con Google si está vacío).
+    - [x] `role`: Selector de rol (`partner` por defecto, `admin`). Deshabilitado para auto-degradación de la propia cuenta.
+    - [x] **Modo Híbrido de Credenciales**: Por defecto genera clave aleatoria segura interna; interruptor opcional *"Definir contraseña manual"* para introducir y confirmar contraseña inicial si el usuario accederá sin Google.
+  - [x] En modo edición: sección para reasignar contraseña opcionalmente y botón para reenviar correo de verificación.
+  - [x] Manejo de validaciones reactivas, mensajes de error y feedback visual.
+  - [x] Suite de pruebas unitarias (`user-form-dialog.component.spec.ts`) al 100%.
+
+- [x] **6.3 Pantalla de Administración de Usuarios (`/admin/usuarios`)**:
+  - [x] Restricción de acceso mediante `roleGuard` (exclusivo para usuarios con rol `admin`).
+  - [x] Encabezado con título claro, badge distintivo `👑 Solo Administradores` y botón de acción principal `+ Invitar Usuario`.
+  - [x] Barra de herramientas de consulta:
+    - [x] Buscador predictivo en tiempo real por nombre o correo electrónico.
+    - [x] Filtro rápido por Rol: *Todos*, *👑 Administradores*, *🐠 Socios*.
+    - [x] Filtro rápido por Estado: *Todos*, *Activos*, *Inactivos*.
+  - [x] Tabla interactiva (Spartan Table):
+    - [x] Columna Usuario: Avatar con iniciales coloreadas, nombre completo y correo con badge `(Tú)` para la cuenta propia.
+    - [x] Columna Rol: Badge temático (`👑 Admin` oro / `🐠 Socio` cian).
+    - [x] Columna Estado: Interruptor `HlmSwitch` para conmutar activo/inactivo de forma inmediata.
+    - [x] Columna Fecha de Alta: Fecha formateada (`dd/MM/yyyy`).
+    - [x] Columna Acciones: Botón de edición (abre modal) y botón de eliminación (abre `HlmAlertDialog`).
+  - [x] **Mecanismo de Auto-protección Activa**:
+    - [x] Deshabilitar interruptor de estado inactivo en la fila del propio administrador autenticado (`currentUser.id`).
+    - [x] Ocultar o deshabilitar botón de eliminación en la fila propia con candado protector.
+    - [x] Bloqueo de auto-degradación de rol a `partner`.
+  - [x] Diálogo de confirmación modal (`HlmAlertDialog`) para eliminación permanente.
+  - [x] Estados de carga (*skeleton* / *spinner*) y estado vacío decorado si no hay resultados en la búsqueda.
+  - [x] Suite de pruebas unitarias (`usuarios.component.spec.ts`) al 100%.
+
+- [x] **6.4 Verificación de Integración y Calidad**:
+  - [x] Verificación de flujo integral en navegador automatizado:
+    - [x] Carga y renderizado de la tabla con los colaboradores existentes.
+    - [x] Apertura y validación del modal de invitación con selector de roles y conmutador de contraseña manual.
+    - [x] Validación visual de las protecciones de seguridad en la fila del administrador actual.
+  - [x] Verificación de suite de pruebas unitarias (20 suites, 171 tests pasando al 100%).
+  - [x] Verificación del build de producción de Angular (`npm run build`).
 
 ---
 

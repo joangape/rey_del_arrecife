@@ -1,7 +1,8 @@
 <section class="space-y-6">
+  <!-- 1. Encabezado de la Página -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border/60">
     <div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2.5">
         <h1 class="text-2xl font-bold tracking-tight text-foreground">Administración de Usuarios</h1>
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
           👑 Solo Administradores
@@ -11,17 +12,399 @@
         Control de acceso, invitación de colaboradores Google y asignación de roles.
       </p>
     </div>
+
+    <div>
+      <button
+        hlmBtn
+        variant="default"
+        size="sm"
+        (click)="openCreateDialog()"
+        class="gap-1.5 shadow-sm text-xs font-semibold h-9 px-4"
+      >
+        <ng-icon name="lucideUserPlus" class="text-sm" />
+        <span>Invitar Usuario</span>
+      </button>
+    </div>
   </div>
 
-  <div class="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center flex flex-col items-center justify-center space-y-4">
-    <div class="size-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-2xl glow-gold">
-      👥
+  <!-- Alerta de Notificación de Éxito -->
+  @if (successNotice()) {
+    <div
+      class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200"
+    >
+      <div class="flex items-center gap-2">
+        <ng-icon name="lucideCheck" class="text-base shrink-0" />
+        <span>{{ successNotice() }}</span>
+      </div>
+      <button
+        type="button"
+        (click)="successNotice.set(null)"
+        class="text-emerald-400/80 hover:text-emerald-300"
+      >
+        <ng-icon name="lucideX" class="text-sm" />
+      </button>
     </div>
-    <div class="max-w-md space-y-2">
-      <h3 class="text-lg font-semibold text-foreground">Panel de Usuarios en Preparación</h3>
-      <p class="text-sm text-muted-foreground leading-relaxed">
-        Aquí se mostrará la tabla de gestión de accesos con interruptores de activación inmediata y el modal de invitación para cuentas de Google autorizadas.
-      </p>
+  }
+
+  <!-- Alerta de Error de Acción -->
+  @if (actionError()) {
+    <div
+      class="p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200"
+    >
+      <div class="flex items-center gap-2">
+        <ng-icon name="lucideAlertCircle" class="text-base shrink-0" />
+        <span>{{ actionError() }}</span>
+      </div>
+      <button
+        type="button"
+        (click)="actionError.set(null)"
+        class="text-destructive/80 hover:text-destructive"
+      >
+        <ng-icon name="lucideX" class="text-sm" />
+      </button>
+    </div>
+  }
+
+  <!-- 2. Barra de Herramientas (Buscador y Filtros Simplificados) -->
+  <div class="p-4 rounded-2xl border border-border/80 bg-card shadow-sm space-y-3.5">
+    <div class="flex flex-col md:flex-row md:items-center gap-3">
+      <!-- Buscador por Texto -->
+      <div class="relative flex-1">
+        <ng-icon
+          name="lucideSearch"
+          class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"
+        />
+        <input
+          hlmInput
+          type="text"
+          [ngModel]="usersService.searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar por nombre o correo electrónico..."
+          class="pl-9 pr-9 text-xs h-9 w-full"
+        />
+        @if (usersService.searchQuery()) {
+          <button
+            type="button"
+            (click)="clearSearch()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+            title="Borrar búsqueda"
+          >
+            <ng-icon name="lucideX" />
+          </button>
+        }
+      </div>
+
+      <!-- Botón de Restablecer si hay filtros activos -->
+      @if (hasActiveFilters()) {
+        <button
+          hlmBtn
+          variant="outline"
+          size="sm"
+          (click)="resetAllFilters()"
+          class="text-xs h-9 px-3 gap-1 shrink-0"
+        >
+          <ng-icon name="lucideX" class="text-xs" />
+          <span>Limpiar filtros</span>
+        </button>
+      }
+    </div>
+
+    <!-- Pestañas Rápidas de Rol y Estado -->
+    <div class="flex flex-wrap items-center gap-4 pt-2 border-t border-border/40 text-xs">
+      <!-- Filtro por Rol -->
+      <div class="flex items-center gap-1.5">
+        <span class="text-muted-foreground text-[11px] font-medium mr-1 flex items-center gap-1">
+          <ng-icon name="lucideShield" class="text-xs" />
+          Rol:
+        </span>
+        @for (opt of roleOptions; track opt.value) {
+          <button
+            type="button"
+            (click)="onRoleChange(opt.value)"
+            [class.bg-primary]="usersService.roleFilter() === opt.value"
+            [class.text-primary-foreground]="usersService.roleFilter() === opt.value"
+            [class.border-primary]="usersService.roleFilter() === opt.value"
+            [class.bg-muted/40]="usersService.roleFilter() !== opt.value"
+            [class.text-muted-foreground]="usersService.roleFilter() !== opt.value"
+            [class.border-border/60]="usersService.roleFilter() !== opt.value"
+            class="px-2.5 py-0.5 rounded-full border text-[11px] font-medium transition-all hover:border-primary/50 cursor-pointer"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+
+      <div class="h-4 w-px bg-border/60 hidden sm:block"></div>
+
+      <!-- Filtro por Estado -->
+      <div class="flex items-center gap-1.5">
+        <span class="text-muted-foreground text-[11px] font-medium mr-1 flex items-center gap-1">
+          <ng-icon name="lucideCheck" class="text-xs" />
+          Estado:
+        </span>
+        @for (opt of statusOptions; track opt.value) {
+          <button
+            type="button"
+            (click)="onStatusChange(opt.value)"
+            [class.bg-primary]="usersService.statusFilter() === opt.value"
+            [class.text-primary-foreground]="usersService.statusFilter() === opt.value"
+            [class.border-primary]="usersService.statusFilter() === opt.value"
+            [class.bg-muted/40]="usersService.statusFilter() !== opt.value"
+            [class.text-muted-foreground]="usersService.statusFilter() !== opt.value"
+            [class.border-border/60]="usersService.statusFilter() !== opt.value"
+            class="px-2.5 py-0.5 rounded-full border text-[11px] font-medium transition-all hover:border-primary/50 cursor-pointer"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
     </div>
   </div>
+
+  <!-- 3. Tabla Spartan de Usuarios -->
+  <div class="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-sm">
+    @if (isLoading()) {
+      <div class="py-16 text-center space-y-3">
+        <div class="inline-block size-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+        <p class="text-xs text-muted-foreground">Cargando usuarios autorizados...</p>
+      </div>
+    } @else if (users().length === 0) {
+      <div class="py-16 text-center space-y-3 px-4">
+        <div class="h-12 w-12 rounded-2xl bg-muted/60 text-muted-foreground flex items-center justify-center mx-auto text-xl">
+          <ng-icon name="lucideUser" />
+        </div>
+        <div class="max-w-sm mx-auto space-y-1">
+          <h4 class="text-sm font-semibold text-foreground">No se encontraron usuarios</h4>
+          <p class="text-xs text-muted-foreground">
+            @if (hasActiveFilters()) {
+              No hay usuarios que coincidan con los filtros aplicados. Intenta restablecer los filtros de búsqueda.
+            } @else {
+              Aún no se ha invitado a ningún usuario. Haz clic en "Invitar Usuario" para comenzar.
+            }
+          </p>
+        </div>
+        @if (hasActiveFilters()) {
+          <button hlmBtn variant="outline" size="sm" (click)="resetAllFilters()" class="text-xs mt-2">
+            Restablecer Filtros
+          </button>
+        } @else {
+          <button hlmBtn variant="default" size="sm" (click)="openCreateDialog()" class="text-xs mt-2">
+            <ng-icon name="lucideUserPlus" class="mr-1.5 text-sm" />
+            Invitar Usuario
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table hlmTable class="w-full text-left text-xs">
+          <thead hlmTHead class="bg-muted/40 text-muted-foreground border-b border-border/60">
+            <tr hlmTr>
+              <th hlmTh class="py-3 pl-4 font-semibold">Usuario</th>
+              <th hlmTh class="py-3 font-semibold">Rol</th>
+              <th hlmTh class="py-3 font-semibold text-center">Estado de Acceso</th>
+              <th hlmTh class="py-3 font-semibold">Fecha de Alta</th>
+              <th hlmTh class="py-3 pr-4 font-semibold text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody hlmTBody class="divide-y divide-border/40">
+            @for (user of users(); track user.id) {
+              <tr hlmTr class="hover:bg-muted/30 transition-colors">
+                <!-- Columna Usuario: Avatar, Nombre y Correo -->
+                <td hlmTd class="py-3 pl-4">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="h-9 w-9 rounded-xl border flex items-center justify-center font-bold text-xs shrink-0 select-none {{ getAvatarColor(user.id) }}"
+                    >
+                      {{ getInitials(user.name, user.email) }}
+                    </div>
+
+                    <div class="overflow-hidden">
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-semibold text-foreground truncate max-w-[200px]">
+                          {{ user.name || 'Sin nombre asignado' }}
+                        </span>
+                        @if (user.id === currentUserId()) {
+                          <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-primary/20 text-primary border border-primary/30">
+                            Tú
+                          </span>
+                        }
+                      </div>
+                      <p class="text-[11px] text-muted-foreground truncate max-w-[240px]">
+                        {{ user.email }}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Columna Rol -->
+                <td hlmTd class="py-3 whitespace-nowrap">
+                  @if (user.role === 'admin') {
+                    <span
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/25"
+                    >
+                      👑 Administrador
+                    </span>
+                  } @else {
+                    <span
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-500 border border-cyan-500/25"
+                    >
+                      🐠 Socio
+                    </span>
+                  }
+                </td>
+
+                <!-- Columna Estado: Conmutador Activo / Inactivo -->
+                <td hlmTd class="py-3 text-center whitespace-nowrap">
+                  <div class="inline-flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      role="switch"
+                      [attr.aria-checked]="user.active"
+                      [disabled]="user.id === currentUserId()"
+                      (click)="onToggleActive(user)"
+                      class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      [class.bg-emerald-500]="user.active"
+                      [class.bg-muted]="!user.active"
+                      [class.opacity-50]="user.id === currentUserId()"
+                      [class.cursor-not-allowed]="user.id === currentUserId()"
+                      [title]="user.id === currentUserId() ? 'No puedes desactivar tu propia cuenta' : (user.active ? 'Haga clic para desactivar' : 'Haga clic para activar')"
+                    >
+                      <span
+                        class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow-lg ring-0 transition-transform"
+                        [class.translate-x-4]="user.active"
+                        [class.translate-x-0]="!user.active"
+                      ></span>
+                    </button>
+
+                    <span
+                      class="text-[11px] font-medium"
+                      [class.text-emerald-500]="user.active"
+                      [class.text-muted-foreground]="!user.active"
+                    >
+                      {{ user.active ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Columna Fecha de Alta -->
+                <td hlmTd class="py-3 text-muted-foreground whitespace-nowrap">
+                  <span class="inline-flex items-center gap-1.5 font-mono text-[11px]">
+                    <ng-icon name="lucideCalendar" class="text-xs text-muted-foreground/70" />
+                    {{ formatDate(user.created) }}
+                  </span>
+                </td>
+
+                <!-- Columna Acciones -->
+                <td hlmTd class="py-3 text-right pr-4 whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      hlmBtn
+                      variant="ghost"
+                      size="icon-xs"
+                      (click)="openEditDialog(user)"
+                      class="text-muted-foreground hover:text-primary rounded-lg"
+                      title="Editar usuario"
+                    >
+                      <ng-icon name="lucidePencil" class="text-xs" />
+                    </button>
+
+                    @if (user.id !== currentUserId()) {
+                      <button
+                        hlmBtn
+                        variant="ghost"
+                        size="icon-xs"
+                        (click)="openDeleteDialog(user)"
+                        class="text-muted-foreground hover:text-destructive rounded-lg"
+                        title="Eliminar usuario"
+                      >
+                        <ng-icon name="lucideTrash2" class="text-xs" />
+                      </button>
+                    } @else {
+                      <span
+                        class="h-6 w-6 flex items-center justify-center text-muted-foreground/40 cursor-not-allowed"
+                        title="No puedes eliminar tu propia cuenta"
+                      >
+                        <ng-icon name="lucideLock" class="text-xs" />
+                      </span>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
 </section>
+
+<!-- Modal Unificado de Formulario (Invitar / Editar Usuario) -->
+<app-user-form-dialog
+  [(isOpen)]="isFormOpen"
+  [userToEdit]="selectedUserForEdit()"
+  (saved)="onUserSaved($event)"
+/>
+
+<!-- Diálogo de Confirmación para Eliminar Usuario -->
+@if (isDeleteDialogOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div
+      class="fixed inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200"
+      (click)="closeDeleteDialog()"
+      aria-hidden="true"
+    ></div>
+
+    <div
+      class="relative w-full max-w-md bg-card border border-border shadow-2xl rounded-2xl p-6 overflow-hidden z-10 animate-in zoom-in-95 fade-in duration-200"
+      role="alertdialog"
+      aria-modal="true"
+    >
+      <div class="flex items-start gap-4">
+        <div class="h-10 w-10 rounded-xl bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
+          <ng-icon name="lucideTrash2" class="text-lg" />
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-base font-bold text-foreground">¿Eliminar acceso de este usuario?</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">
+            Se revocará el acceso de forma permanente a
+            <strong class="text-foreground">{{ userToDelete()?.email }}</strong>
+            @if (userToDelete()?.name) {
+              ({{ userToDelete()?.name }})
+            }.
+            El usuario ya no podrá iniciar sesión en la plataforma ni consultar datos.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          hlmBtn
+          variant="ghost"
+          (click)="closeDeleteDialog()"
+          [disabled]="isDeleting()"
+          class="text-xs"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          hlmBtn
+          variant="destructive"
+          (click)="executeDelete()"
+          [disabled]="isDeleting()"
+          class="text-xs gap-1.5"
+        >
+          @if (isDeleting()) {
+            <ng-icon name="lucideLoader2" class="animate-spin text-sm" />
+            <span>Eliminando...</span>
+          } @else {
+            <ng-icon name="lucideTrash2" class="text-sm" />
+            <span>Confirmar Eliminación</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

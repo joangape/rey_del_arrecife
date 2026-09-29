@@ -19,3 +19,23 @@ export interface AuthResult {
   error?: string;
   isCancelled?: boolean;
 }
+
+export interface CreateUserDto {
+  email: string;
+  name?: string;
+  role: UserRole;
+  password?: string;
+}
+
+export interface UpdateUserDto {
+  email?: string;
+  name?: string;
+  role?: UserRole;
+  active?: boolean;
+  password?: string;
+  passwordConfirm?: string;
+}
+
+export type UserRoleFilter = 'all' | 'admin' | 'partner';
+export type UserStatusFilter = 'all' | 'active' | 'inactive';
+
