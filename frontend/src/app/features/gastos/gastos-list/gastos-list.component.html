@@ -1,27 +1,543 @@
 <section class="space-y-6">
+  <!-- Cabecera principal -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border/60">
     <div>
-      <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-bold tracking-tight text-foreground">Gestión de Gastos Extra</h1>
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-          Placeholder
-        </span>
+      <div class="flex items-center gap-2.5">
+        <div class="h-9 w-9 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
+          <ng-icon name="lucideReceipt" class="text-xl" />
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-foreground">Gestión de Gastos Extra</h1>
+          <p class="text-xs text-muted-foreground mt-0.5">
+            Control de intervenciones de taller, arreglos, enfilados y seguimiento de pagos
+          </p>
+        </div>
       </div>
-      <p class="text-sm text-muted-foreground mt-1">
-        Control contable de reparaciones, enfilados, certificados y gastos asociados.
-      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button
+        hlmBtn
+        variant="default"
+        (click)="openCreateDialog()"
+        class="h-9 px-4 text-xs font-semibold flex items-center gap-2 shadow-sm"
+      >
+        <ng-icon name="lucidePlus" class="text-sm" />
+        <span>Nuevo Gasto</span>
+      </button>
     </div>
   </div>
 
-  <div class="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center flex flex-col items-center justify-center space-y-4">
-    <div class="size-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-2xl glow-cyan">
-      🧾
+  <!-- 1. Tarjetas KPI Superiores -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <!-- Total Gastos Acumulado -->
+    <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm relative overflow-hidden group hover:border-primary/40 transition-colors">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Total Gastos Imputados
+        </span>
+        <div class="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+          <ng-icon name="lucideDollarSign" class="text-base" />
+        </div>
+      </div>
+      <div class="mt-3 flex items-baseline gap-2">
+        <span class="text-2xl font-black tracking-tight text-foreground">
+          {{ formatCurrency(gastosService.stats().totalGastos) }}
+        </span>
+        <span class="text-xs text-muted-foreground">
+          ({{ gastosService.stats().countTotal }} gastos)
+        </span>
+      </div>
+      <div class="mt-2 text-[11px] text-muted-foreground">
+        Coste adicional sumado al inventario
+      </div>
+      <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 to-primary/10"></div>
     </div>
-    <div class="max-w-md space-y-2">
-      <h3 class="text-lg font-semibold text-foreground">Módulo de Gastos en Preparación</h3>
-      <p class="text-sm text-muted-foreground leading-relaxed">
-        Aquí se habilitará la tabla de gastos con filtro de pendientes/liquidados y modal ágil para dar de alta nuevos gastos vinculados a piezas de inventario.
-      </p>
+
+    <!-- Total Pagado / Liquidado -->
+    <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm relative overflow-hidden group hover:border-emerald-500/40 transition-colors">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Gastos Pagados
+        </span>
+        <div class="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+          <ng-icon name="lucideCheckCircle2" class="text-base" />
+        </div>
+      </div>
+      <div class="mt-3 flex items-baseline gap-2">
+        <span class="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
+          {{ formatCurrency(gastosService.stats().totalPagado) }}
+        </span>
+        <span class="text-xs text-muted-foreground">
+          ({{ gastosService.stats().countPagados }} liquidados)
+        </span>
+      </div>
+      <div class="mt-2 text-[11px] text-muted-foreground">
+        Facturas y talleres ya abonados
+      </div>
+      <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/50 to-emerald-500/10"></div>
+    </div>
+
+    <!-- Total Pendiente de Pago -->
+    <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm relative overflow-hidden group hover:border-amber-500/40 transition-colors">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Pendiente de Pago
+        </span>
+        <div class="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+          <ng-icon name="lucideClock" class="text-base" />
+        </div>
+      </div>
+      <div class="mt-3 flex items-baseline gap-2">
+        <span class="text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400">
+          {{ formatCurrency(gastosService.stats().totalPendiente) }}
+        </span>
+        <span class="text-xs text-muted-foreground">
+          ({{ gastosService.stats().countPendientes }} por pagar)
+        </span>
+      </div>
+      <div class="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
+        @if (gastosService.stats().countPendientes > 0) {
+          <span class="inline-block h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+          <span>Intervenciones pendientes de liquidar</span>
+        } @else {
+          <span class="text-emerald-600 dark:text-emerald-400">¡Al día! No hay pagos pendientes</span>
+        }
+      </div>
+      <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/50 to-amber-500/10"></div>
     </div>
   </div>
+
+  <!-- 2. Filtros y Barra de Búsqueda -->
+  <div class="rounded-2xl border border-border/70 bg-card p-4 space-y-4 shadow-sm">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <!-- Buscador por texto / Ref -->
+      <div class="relative flex-1 max-w-md">
+        <ng-icon
+          name="lucideSearch"
+          class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"
+        />
+        <input
+          type="text"
+          hlmInput
+          placeholder="Buscar por referencia de pieza (#42), concepto o comentarios..."
+          [ngModel]="gastosService.searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+          class="w-full pl-9 pr-8 text-xs h-9"
+        />
+        @if (gastosService.searchQuery()) {
+          <button
+            type="button"
+            (click)="gastosService.setSearch('')"
+            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+          >
+            <ng-icon name="lucideX" class="text-sm" />
+          </button>
+        }
+      </div>
+
+      <!-- Selector de fechas y reseteo -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1.5 bg-muted/30 border border-border/70 rounded-xl px-2.5 py-1 text-xs">
+          <ng-icon name="lucideCalendar" class="text-muted-foreground text-xs" />
+          <span class="text-[11px] text-muted-foreground">Desde:</span>
+          <input
+            type="date"
+            [ngModel]="localStartDate()"
+            (ngModelChange)="localStartDate.set($event); onDateFilterApply()"
+            class="bg-transparent border-none text-[11px] focus:outline-none text-foreground"
+          />
+          <span class="text-[11px] text-muted-foreground ml-1">Hasta:</span>
+          <input
+            type="date"
+            [ngModel]="localEndDate()"
+            (ngModelChange)="localEndDate.set($event); onDateFilterApply()"
+            class="bg-transparent border-none text-[11px] focus:outline-none text-foreground"
+          />
+          @if (localStartDate() || localEndDate()) {
+            <button
+              type="button"
+              (click)="clearDateFilter()"
+              class="text-muted-foreground hover:text-destructive p-0.5 ml-1"
+              title="Borrar filtro de fechas"
+            >
+              <ng-icon name="lucideX" class="text-xs" />
+            </button>
+          }
+        </div>
+
+        @if (gastosService.hasActiveFilters()) {
+          <button
+            hlmBtn
+            variant="ghost"
+            size="sm"
+            (click)="resetAllFilters()"
+            class="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1.5 h-9"
+          >
+            <ng-icon name="lucideRotateCcw" class="text-xs" />
+            <span>Restablecer</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Pestañas de Estado de Pago -->
+    <div class="flex items-center gap-2 pt-1 border-t border-border/40 overflow-x-auto text-xs">
+      <span class="text-muted-foreground font-medium flex items-center gap-1 text-[11px] mr-1">
+        <ng-icon name="lucideTag" class="text-xs" />
+        Estado:
+      </span>
+      @for (opt of statusOptions; track opt.value) {
+        <button
+          type="button"
+          (click)="onStatusChange(opt.value)"
+          [class.bg-primary]="gastosService.statusFilter() === opt.value"
+          [class.text-primary-foreground]="gastosService.statusFilter() === opt.value"
+          [class.border-primary]="gastosService.statusFilter() === opt.value"
+          [class.bg-muted/40]="gastosService.statusFilter() !== opt.value"
+          [class.text-muted-foreground]="gastosService.statusFilter() !== opt.value"
+          [class.border-border/60]="gastosService.statusFilter() !== opt.value"
+          class="px-3 py-1 rounded-full border text-xs font-medium whitespace-nowrap transition-all hover:border-primary/50 hover:text-foreground cursor-pointer"
+        >
+          {{ opt.label }}
+          @if (opt.value === 'pendientes') {
+            <span class="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-500 font-bold">
+              {{ gastosService.stats().countPendientes }}
+            </span>
+          } @else if (opt.value === 'pagados') {
+            <span class="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-500/20 text-emerald-500 font-bold">
+              {{ gastosService.stats().countPagados }}
+            </span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- 3. Tabla Spartan de Gastos -->
+  <div class="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-sm">
+    @if (gastosService.isLoading()) {
+      <div class="py-16 text-center space-y-3">
+        <div class="inline-block size-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+        <p class="text-xs text-muted-foreground">Cargando gastos extra...</p>
+      </div>
+    } @else if (gastosService.gastos().length === 0) {
+      <div class="py-16 text-center space-y-3 px-4">
+        <div class="h-12 w-12 rounded-2xl bg-muted/60 text-muted-foreground flex items-center justify-center mx-auto text-xl">
+          <ng-icon name="lucideReceipt" />
+        </div>
+        <div class="max-w-sm mx-auto space-y-1">
+          <h4 class="text-sm font-semibold text-foreground">No se encontraron gastos extra</h4>
+          <p class="text-xs text-muted-foreground">
+            @if (gastosService.hasActiveFilters()) {
+              No hay gastos que coincidan con los filtros aplicados. Intenta restablecer los filtros de búsqueda.
+            } @else {
+              Aún no se ha registrado ningún gasto extra. Haz clic en "Nuevo Gasto" para comenzar.
+            }
+          </p>
+        </div>
+        @if (gastosService.hasActiveFilters()) {
+          <button hlmBtn variant="outline" size="sm" (click)="resetAllFilters()" class="text-xs mt-2">
+            Restablecer Filtros
+          </button>
+        } @else {
+          <button hlmBtn variant="default" size="sm" (click)="openCreateDialog()" class="text-xs mt-2">
+            <ng-icon name="lucidePlus" class="mr-1.5 text-sm" />
+            Nuevo Gasto
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table hlmTable class="w-full text-xs">
+          <thead hlmThead>
+            <tr hlmTr class="border-b border-border/60 bg-muted/20">
+              <!-- Ref / Pieza -->
+              <th hlmTh class="w-48">
+                <button
+                  type="button"
+                  (click)="toggleSort('ref_pieza')"
+                  class="flex items-center gap-1.5 font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  <span>Pieza Asociada</span>
+                  @if (gastosService.sortField() === 'ref_pieza') {
+                    <ng-icon
+                      [name]="gastosService.sortDirection() === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                      class="text-xs text-primary"
+                    />
+                  } @else {
+                    <ng-icon name="lucideArrowUpDown" class="text-xs text-muted-foreground/50" />
+                  }
+                </button>
+              </th>
+
+              <!-- Concepto / Descripción -->
+              <th hlmTh class="min-w-[220px]">Concepto & Observaciones</th>
+
+              <!-- Fecha Gasto -->
+              <th hlmTh class="w-32">
+                <button
+                  type="button"
+                  (click)="toggleSort('fecha_gasto')"
+                  class="flex items-center gap-1.5 font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  <span>Fecha Gasto</span>
+                  @if (gastosService.sortField() === 'fecha_gasto') {
+                    <ng-icon
+                      [name]="gastosService.sortDirection() === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                      class="text-xs text-primary"
+                    />
+                  } @else {
+                    <ng-icon name="lucideArrowUpDown" class="text-xs text-muted-foreground/50" />
+                  }
+                </button>
+              </th>
+
+              <!-- Importe -->
+              <th hlmTh class="w-28 text-right">
+                <button
+                  type="button"
+                  (click)="toggleSort('importe')"
+                  class="flex items-center gap-1.5 font-semibold text-foreground hover:text-primary transition-colors cursor-pointer ml-auto"
+                >
+                  <span>Importe</span>
+                  @if (gastosService.sortField() === 'importe') {
+                    <ng-icon
+                      [name]="gastosService.sortDirection() === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                      class="text-xs text-primary"
+                    />
+                  } @else {
+                    <ng-icon name="lucideArrowUpDown" class="text-xs text-muted-foreground/50" />
+                  }
+                </button>
+              </th>
+
+              <!-- Estado de Pago -->
+              <th hlmTh class="w-36 text-center">Estado de Pago</th>
+
+              <!-- Acciones -->
+              <th hlmTh class="w-24 text-right pr-4">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody hlmTbody>
+            @for (gasto of gastosService.gastos(); track gasto.id) {
+              <tr hlmTr class="border-b border-border/40 hover:bg-muted/30 transition-colors">
+                <!-- Columna Pieza Asociada -->
+                <td hlmTd class="py-3 font-medium">
+                  <a
+                    [routerLink]="['/inventario', gasto.pieza || gasto.expand?.pieza?.id]"
+                    class="flex items-center gap-2.5 group"
+                    title="Ver ficha de inventario"
+                  >
+                    @if (getPieceThumbnail(gasto)) {
+                      <img
+                        [src]="getPieceThumbnail(gasto)"
+                        alt="Miniatura pieza"
+                        class="h-8 w-8 rounded-lg object-cover border border-border/60 shrink-0"
+                      />
+                    } @else {
+                      <div class="h-8 w-8 rounded-lg bg-muted/60 border border-border/40 flex items-center justify-center text-muted-foreground shrink-0">
+                        <ng-icon name="lucidePackage" class="text-xs" />
+                      </div>
+                    }
+
+                    <div class="overflow-hidden">
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        Ref. #{{ gasto.ref_pieza }}
+                      </span>
+                      <p class="text-[11px] text-muted-foreground truncate max-w-[130px] mt-0.5 group-hover:text-foreground transition-colors">
+                        {{ gasto.expand?.pieza?.descripcion || 'Ver pieza' }}
+                      </p>
+                    </div>
+                  </a>
+                </td>
+
+                <!-- Columna Concepto -->
+                <td hlmTd class="py-3">
+                  <div class="space-y-0.5">
+                    <p class="font-semibold text-foreground">
+                      {{ gasto.descripcion }}
+                    </p>
+                    @if (gasto.comentarios) {
+                      <p class="text-[11px] text-muted-foreground line-clamp-1">
+                        {{ gasto.comentarios }}
+                      </p>
+                    }
+                  </div>
+                </td>
+
+                <!-- Columna Fecha Gasto -->
+                <td hlmTd class="py-3 text-muted-foreground whitespace-nowrap">
+                  <span class="inline-flex items-center gap-1.5 font-mono text-[11px]">
+                    <ng-icon name="lucideCalendar" class="text-xs text-muted-foreground/70" />
+                    {{ formatDate(gasto.fecha_gasto) }}
+                  </span>
+                </td>
+
+                <!-- Columna Importe -->
+                <td hlmTd class="py-3 text-right">
+                  <span class="font-mono font-bold text-foreground text-xs">
+                    {{ formatCurrency(gasto.importe) }}
+                  </span>
+                </td>
+
+                <!-- Columna Estado de Pago -->
+                <td hlmTd class="py-3 text-center">
+                  @if (gasto.fecha_pago) {
+                    <span
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25"
+                      title="Liquidado el {{ formatDate(gasto.fecha_pago) }}"
+                    >
+                      <ng-icon name="lucideCheck" class="text-xs" />
+                      Pagado ({{ formatDate(gasto.fecha_pago) }})
+                    </span>
+                  } @else {
+                    <span
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25"
+                    >
+                      <ng-icon name="lucideClock" class="text-xs" />
+                      Pendiente
+                    </span>
+                  }
+                </td>
+
+                <!-- Columna Acciones -->
+                <td hlmTd class="py-3 text-right pr-4">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      hlmBtn
+                      variant="ghost"
+                      size="icon-xs"
+                      (click)="openEditDialog(gasto)"
+                      class="text-muted-foreground hover:text-primary rounded-lg"
+                      title="Editar gasto"
+                    >
+                      <ng-icon name="lucidePencil" class="text-xs" />
+                    </button>
+
+                    <button
+                      hlmBtn
+                      variant="ghost"
+                      size="icon-xs"
+                      (click)="openDeleteDialog(gasto)"
+                      class="text-muted-foreground hover:text-destructive rounded-lg"
+                      title="Eliminar gasto"
+                    >
+                      <ng-icon name="lucideTrash2" class="text-xs" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Barra de Paginación -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-t border-border/60 bg-muted/10 text-xs">
+        <div class="text-muted-foreground">
+          Mostrando <span class="font-medium text-foreground">{{ startItemIndex() }}</span> a
+          <span class="font-medium text-foreground">{{ endItemIndex() }}</span> de
+          <span class="font-medium text-foreground">{{ gastosService.totalItems() }}</span> gastos
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            [disabled]="gastosService.page() <= 1"
+            (click)="goToPage(gastosService.page() - 1)"
+            class="h-8 px-2.5 text-xs flex items-center gap-1"
+          >
+            <ng-icon name="lucideChevronLeft" class="text-xs" />
+            <span>Anterior</span>
+          </button>
+
+          <span class="px-2 text-xs font-medium text-muted-foreground">
+            Página {{ gastosService.page() }} de {{ gastosService.totalPages() }}
+          </span>
+
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            [disabled]="gastosService.page() >= gastosService.totalPages()"
+            (click)="goToPage(gastosService.page() + 1)"
+            class="h-8 px-2.5 text-xs flex items-center gap-1"
+          >
+            <span>Siguiente</span>
+            <ng-icon name="lucideChevronRight" class="text-xs" />
+          </button>
+        </div>
+      </div>
+    }
+  </div>
 </section>
+
+<!-- Modal de Formulario (Alta / Edición de Gasto) -->
+<app-gasto-form-dialog
+  [(isOpen)]="isFormDialogOpen"
+  [gastoToEdit]="gastoToEdit()"
+/>
+
+<!-- Diálogo de Confirmación para Eliminar Gasto -->
+@if (isDeleteDialogOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div
+      class="fixed inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200"
+      (click)="closeDeleteDialog()"
+      aria-hidden="true"
+    ></div>
+
+    <div
+      class="relative w-full max-w-md bg-card border border-border shadow-2xl rounded-2xl p-6 overflow-hidden z-10 animate-in zoom-in-95 fade-in duration-200"
+      role="alertdialog"
+      aria-modal="true"
+    >
+      <div class="flex items-start gap-4">
+        <div class="h-10 w-10 rounded-xl bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
+          <ng-icon name="lucideTrash2" class="text-lg" />
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-base font-bold text-foreground">¿Eliminar este gasto extra?</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">
+            Se eliminará el gasto <strong class="text-foreground">"{{ gastoToDelete()?.descripcion }}"</strong>
+            asociado a la pieza <span class="font-bold text-primary">#{{ gastoToDelete()?.ref_pieza }}</span> por un importe de
+            <span class="font-mono font-bold">{{ formatCurrency(gastoToDelete()?.importe) }}</span>.
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          hlmBtn
+          variant="ghost"
+          (click)="closeDeleteDialog()"
+          [disabled]="isDeleting()"
+          class="text-xs"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          hlmBtn
+          variant="destructive"
+          (click)="executeDelete()"
+          [disabled]="isDeleting()"
+          class="text-xs font-semibold"
+        >
+          @if (isDeleting()) {
+            <span>Eliminando...</span>
+          } @else {
+            <span>Sí, eliminar gasto</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

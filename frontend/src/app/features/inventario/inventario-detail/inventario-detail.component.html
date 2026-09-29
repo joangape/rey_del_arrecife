@@ -664,22 +664,47 @@
 
       <!-- Desglose de Gastos Extra Vinculados -->
       <div class="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm p-4 space-y-3 shadow-sm">
-        <div class="flex items-center justify-between pb-2 border-b border-border/50">
-          <h3 class="text-xs font-bold text-foreground flex items-center gap-2">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border/50">
+          <div class="flex items-center gap-2">
             <ng-icon name="lucideReceipt" class="size-4 text-primary" />
-            <span>Detalle de Intervenciones & Gastos Asociados</span>
-          </h3>
-          <span class="text-xs text-muted-foreground font-mono">
-            Total: {{ formatCurrency(totalGastosExtra()) }}
-          </span>
+            <h3 class="text-xs font-bold text-foreground">
+              Detalle de Intervenciones & Gastos Asociados
+            </h3>
+            <span class="text-xs text-muted-foreground font-mono ml-1">
+              (Total: {{ formatCurrency(totalGastosExtra()) }})
+            </span>
+          </div>
+
+          <button
+            type="button"
+            hlmBtn
+            variant="outline"
+            size="sm"
+            (click)="openAddGastoDialog()"
+            class="h-7 px-3 text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+          >
+            <ng-icon name="lucidePlus" class="size-3 text-primary" />
+            <span>Añadir Gasto</span>
+          </button>
         </div>
 
         @if (gastos().length === 0) {
-          <div class="py-8 text-center text-muted-foreground text-xs space-y-1">
+          <div class="py-8 text-center text-muted-foreground text-xs space-y-2">
             <p>No constan gastos extra registrados para esta pieza.</p>
             <p class="text-[11px] text-muted-foreground/70">
-              Cualquier intervención (enfilado, arreglo, transporte) imputada en el módulo de gastos se reflejará aquí.
+              Cualquier intervención (enfilado, arreglo, transporte) imputada se reflejará aquí y sumará al coste total.
             </p>
+            <button
+              type="button"
+              hlmBtn
+              variant="ghost"
+              size="sm"
+              (click)="openAddGastoDialog()"
+              class="text-xs text-primary hover:text-primary/80 mt-1 cursor-pointer"
+            >
+              <ng-icon name="lucidePlus" class="size-3 mr-1" />
+              <span>Registrar primer gasto</span>
+            </button>
           </div>
         } @else {
           <div class="overflow-x-auto">
@@ -691,6 +716,7 @@
                   <th class="py-2.5 px-3">Fecha Pago</th>
                   <th class="py-2.5 px-3">Comentarios</th>
                   <th class="py-2.5 px-3 text-right">Importe</th>
+                  <th class="py-2.5 px-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-border/40">
@@ -719,6 +745,32 @@
                     <td class="py-2 px-3 text-right font-mono font-bold text-foreground">
                       {{ formatCurrency(gasto.importe) }}
                     </td>
+                    <td class="py-2 px-3 text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          hlmBtn
+                          variant="ghost"
+                          size="icon-xs"
+                          (click)="openEditGastoDialog(gasto)"
+                          class="text-muted-foreground hover:text-primary rounded-lg"
+                          title="Editar gasto"
+                        >
+                          <ng-icon name="lucidePencil" class="size-3" />
+                        </button>
+                        <button
+                          type="button"
+                          hlmBtn
+                          variant="ghost"
+                          size="icon-xs"
+                          (click)="openDeleteGastoDialog(gasto)"
+                          class="text-muted-foreground hover:text-destructive rounded-lg"
+                          title="Eliminar gasto"
+                        >
+                          <ng-icon name="lucideTrash2" class="size-3" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -729,6 +781,74 @@
     </div>
   }
 </section>
+
+<!-- Modal de Alta / Edición de Gasto en Ficha -->
+<app-gasto-form-dialog
+  [(isOpen)]="isGastoDialogOpen"
+  [gastoToEdit]="gastoToEdit()"
+  [preselectedPieza]="gastoPreselectedPieza()"
+  (saved)="onGastoSaved($event)"
+/>
+
+<!-- Diálogo de Confirmación para Eliminar Gasto en Ficha -->
+@if (isDeleteGastoDialogOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div
+      class="fixed inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200"
+      (click)="closeDeleteGastoDialog()"
+      aria-hidden="true"
+    ></div>
+
+    <div
+      class="relative w-full max-w-md bg-card border border-border shadow-2xl rounded-2xl p-6 overflow-hidden z-10 animate-in zoom-in-95 fade-in duration-200"
+      role="alertdialog"
+      aria-modal="true"
+    >
+      <div class="flex items-start gap-4">
+        <div class="h-10 w-10 rounded-xl bg-destructive/15 text-destructive flex items-center justify-center shrink-0">
+          <ng-icon name="lucideTrash2" class="text-lg" />
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-base font-bold text-foreground">¿Eliminar este gasto extra?</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">
+            Se eliminará el gasto <strong class="text-foreground">"{{ gastoToDelete()?.descripcion }}"</strong>
+            por un importe de
+            <span class="font-mono font-bold">{{ formatCurrency(gastoToDelete()?.importe) }}</span>.
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          hlmBtn
+          variant="ghost"
+          (click)="closeDeleteGastoDialog()"
+          [disabled]="isDeletingGasto()"
+          class="text-xs"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          hlmBtn
+          variant="destructive"
+          (click)="executeDeleteGasto()"
+          [disabled]="isDeletingGasto()"
+          class="text-xs font-semibold"
+        >
+          @if (isDeletingGasto()) {
+            <span>Eliminando...</span>
+          } @else {
+            <span>Sí, eliminar gasto</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Visor Lightbox Modal en Pantalla Completa -->
 @if (isLightboxOpen() && selectedPhoto()) {

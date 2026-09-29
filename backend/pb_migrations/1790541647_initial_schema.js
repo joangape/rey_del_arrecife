@@ -1062,7 +1062,7 @@ migrate((app) => {
     },
     {
       "createRule": "@request.auth.id != \"\"",
-      "deleteRule": "@request.auth.role = \"admin\"",
+      "deleteRule": "@request.auth.id != \"\"",
       "fields": [
         {
           "autogeneratePattern": "[a-z0-9]{15}",

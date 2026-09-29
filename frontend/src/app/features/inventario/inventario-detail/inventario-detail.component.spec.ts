@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GastoExtra } from '../../../core/models/gastos.model';
 import { InventarioItem } from '../../../core/models/inventario.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { GastosService } from '../../../core/services/gastos.service';
 import { InventarioService } from '../../../core/services/inventario.service';
 import { InventarioDetailComponent } from './inventario-detail.component';
 
@@ -14,6 +15,7 @@ describe('InventarioDetailComponent', () => {
   let component: InventarioDetailComponent;
   let fixture: ComponentFixture<InventarioDetailComponent>;
   let mockInventarioService: any;
+  let mockGastosService: any;
   let mockAuthService: any;
   let mockRouter: any;
 
@@ -57,6 +59,14 @@ describe('InventarioDetailComponent', () => {
       isPartner: signal<boolean>(false),
     };
 
+    mockGastosService = {
+      getGastosByPieza: vi.fn().mockResolvedValue([...mockGastos]),
+      deleteGasto: vi.fn().mockResolvedValue(true),
+      createGasto: vi.fn().mockResolvedValue({ id: 'g_new' }),
+      updateGasto: vi.fn().mockResolvedValue({ id: 'g_up' }),
+      searchPiezas: vi.fn().mockResolvedValue([]),
+    };
+
     mockInventarioService = {
       getItemById: vi.fn().mockResolvedValue({ ...mockItem }),
       getItemGastos: vi.fn().mockResolvedValue([...mockGastos]),
@@ -86,6 +96,7 @@ describe('InventarioDetailComponent', () => {
         { provide: Router, useValue: mockRouter },
         { provide: AuthService, useValue: mockAuthService },
         { provide: InventarioService, useValue: mockInventarioService },
+        { provide: GastosService, useValue: mockGastosService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -239,5 +250,41 @@ describe('InventarioDetailComponent', () => {
 
     component.closeLightbox();
     expect(component.isLightboxOpen()).toBe(false);
+  });
+
+  it('should open and close gasto dialogs and preselect current piece', () => {
+    component.openAddGastoDialog();
+    expect(component.isGastoDialogOpen()).toBe(true);
+    expect(component.gastoToEdit()).toBeNull();
+    expect(component.gastoPreselectedPieza()).toEqual({
+      id: 'rec_1',
+      ref: 42,
+      descripcion: 'Anillo de oro con esmeralda',
+    });
+
+    component.openEditGastoDialog(mockGastos[0]);
+    expect(component.isGastoDialogOpen()).toBe(true);
+    expect(component.gastoToEdit()).toEqual(mockGastos[0]);
+
+    component.openDeleteGastoDialog(mockGastos[0]);
+    expect(component.isDeleteGastoDialogOpen()).toBe(true);
+    expect(component.gastoToDelete()).toEqual(mockGastos[0]);
+
+    component.closeDeleteGastoDialog();
+    expect(component.isDeleteGastoDialogOpen()).toBe(false);
+  });
+
+  it('should delete a gasto and reload list', async () => {
+    component.openDeleteGastoDialog(mockGastos[0]);
+    await component.executeDeleteGasto();
+
+    expect(mockGastosService.deleteGasto).toHaveBeenCalledWith('gasto_1');
+    expect(mockGastosService.getGastosByPieza).toHaveBeenCalledWith('rec_1', 42);
+    expect(component.isDeleteGastoDialogOpen()).toBe(false);
+  });
+
+  it('should reload gastos when onGastoSaved is called', async () => {
+    await component.onGastoSaved({ id: 'g_new' } as any);
+    expect(mockGastosService.getGastosByPieza).toHaveBeenCalledWith('rec_1', 42);
   });
 });

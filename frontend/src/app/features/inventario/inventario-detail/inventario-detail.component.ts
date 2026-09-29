@@ -22,6 +22,7 @@ import {
   lucideImage,
   lucideLoader2,
   lucideLock,
+  lucidePencil,
   lucidePercent,
   lucidePlus,
   lucideReceipt,
@@ -45,7 +46,9 @@ import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
 import { GastoExtra } from '../../../core/models/gastos.model';
 import { InventarioItem } from '../../../core/models/inventario.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { GastosService } from '../../../core/services/gastos.service';
 import { InventarioService } from '../../../core/services/inventario.service';
+import { GastoFormDialogComponent } from '../../gastos/gasto-form-dialog/gasto-form-dialog.component';
 
 export interface PhotoDisplayItem {
   id: string;
@@ -68,12 +71,14 @@ export interface PhotoDisplayItem {
     ...HlmTooltipImports,
     ...HlmTableImports,
     ...HlmAlertDialogImports,
+    GastoFormDialogComponent,
   ],
   providers: [
     provideIcons({
       lucideArrowLeft,
       lucideSave,
       lucideTrash2,
+      lucidePencil,
       lucideLock,
       lucideExternalLink,
       lucideImage,
@@ -105,6 +110,7 @@ export class InventarioDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   readonly inventarioService = inject(InventarioService);
+  readonly gastosService = inject(GastosService);
   readonly authService = inject(AuthService);
 
   // Estados reactivos principales
@@ -116,6 +122,23 @@ export class InventarioDetailComponent implements OnInit {
   readonly isUploading = signal<boolean>(false);
   readonly isDeleting = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
+
+  // Gestión de Gastos Extra en la Ficha
+  readonly isGastoDialogOpen = signal<boolean>(false);
+  readonly gastoToEdit = signal<GastoExtra | null>(null);
+  readonly gastoToDelete = signal<GastoExtra | null>(null);
+  readonly isDeleteGastoDialogOpen = signal<boolean>(false);
+  readonly isDeletingGasto = signal<boolean>(false);
+
+  readonly gastoPreselectedPieza = computed(() => {
+    const it = this.item();
+    if (!it) return null;
+    return {
+      id: it.id,
+      ref: it.ref,
+      descripcion: it.descripcion || `Pieza #${it.ref}`,
+    };
+  });
 
   // Galería de fotos
   readonly selectedPhoto = signal<PhotoDisplayItem | null>(null);
@@ -561,5 +584,57 @@ export class InventarioDetailComponent implements OnInit {
     }
 
     return trimmed;
+  }
+
+  // --- Métodos de Gestión de Gastos Extra en la Ficha ---
+
+  openAddGastoDialog(): void {
+    this.gastoToEdit.set(null);
+    this.isGastoDialogOpen.set(true);
+  }
+
+  openEditGastoDialog(gasto: GastoExtra): void {
+    this.gastoToEdit.set(gasto);
+    this.isGastoDialogOpen.set(true);
+  }
+
+  openDeleteGastoDialog(gasto: GastoExtra): void {
+    this.gastoToDelete.set(gasto);
+    this.isDeleteGastoDialogOpen.set(true);
+  }
+
+  closeDeleteGastoDialog(): void {
+    this.isDeleteGastoDialogOpen.set(false);
+    this.gastoToDelete.set(null);
+  }
+
+  async executeDeleteGasto(): Promise<void> {
+    const g = this.gastoToDelete();
+    if (!g) return;
+
+    this.isDeletingGasto.set(true);
+    try {
+      await this.gastosService.deleteGasto(g.id);
+      toast.success('Gasto extra eliminado correctamente.');
+      this.closeDeleteGastoDialog();
+      await this.reloadItemGastos();
+    } catch (err: any) {
+      console.error('Error al eliminar gasto:', err);
+      toast.error('Error al eliminar el gasto extra.');
+    } finally {
+      this.isDeletingGasto.set(false);
+    }
+  }
+
+  async onGastoSaved(_saved: GastoExtra): Promise<void> {
+    toast.success('Gasto extra guardado correctamente.');
+    await this.reloadItemGastos();
+  }
+
+  async reloadItemGastos(): Promise<void> {
+    const it = this.item();
+    if (!it) return;
+    const updatedGastos = await this.gastosService.getGastosByPieza(it.id, it.ref);
+    this.gastos.set(updatedGastos);
   }
 }

@@ -1,0 +1,332 @@
+@if (isOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <!-- Backdrop desenfocado -->
+    <div
+      class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+      (click)="close()"
+      aria-hidden="true"
+    ></div>
+
+    <!-- Panel del Diálogo -->
+    <div
+      class="relative w-full max-w-xl bg-card border border-border/80 shadow-2xl rounded-2xl p-6 sm:p-7 overflow-hidden z-10 animate-in zoom-in-95 fade-in duration-200"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="'dialog-title'"
+    >
+      <!-- Cabecera -->
+      <div class="flex items-start justify-between pb-4 border-b border-border/50">
+        <div class="flex items-center gap-3">
+          <div
+            class="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary"
+          >
+            <ng-icon name="lucideReceipt" class="text-xl" />
+          </div>
+          <div>
+            <h2 id="dialog-title" class="text-lg font-bold tracking-tight text-foreground">
+              {{ isEditMode() ? 'Editar Gasto Extra' : 'Registrar Gasto Extra' }}
+            </h2>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              {{ isEditMode() ? 'Modifica los datos del gasto seleccionado' : 'Imputa una intervención, arreglo o enfilado a una pieza' }}
+            </p>
+          </div>
+        </div>
+
+        <button
+          hlmBtn
+          variant="ghost"
+          size="icon-sm"
+          type="button"
+          (click)="close()"
+          class="text-muted-foreground hover:text-foreground rounded-lg"
+          aria-label="Cerrar modal"
+        >
+          <ng-icon name="lucideX" class="text-base" />
+        </button>
+      </div>
+
+      <!-- Alerta de Error -->
+      @if (errorMessage()) {
+        <div
+          class="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2"
+        >
+          <ng-icon name="lucideAlertCircle" class="text-base shrink-0" />
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" class="mt-5 space-y-4">
+        <!-- 1. Selector de Pieza -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Pieza de Inventario <span class="text-destructive">*</span>
+          </label>
+
+          @if (selectedPieza()) {
+            <div
+              class="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/80 transition-colors"
+            >
+              <div class="flex items-center gap-3 overflow-hidden">
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-primary/15 text-primary border border-primary/25 shrink-0"
+                >
+                  Ref. #{{ selectedPieza()?.ref }}
+                </span>
+                <span class="text-xs font-medium text-foreground truncate">
+                  {{ selectedPieza()?.descripcion }}
+                </span>
+              </div>
+
+              @if (!preselectedPieza()) {
+                <button
+                  type="button"
+                  hlmBtn
+                  variant="ghost"
+                  size="icon-xs"
+                  (click)="clearSelectedPieza()"
+                  class="text-muted-foreground hover:text-destructive shrink-0"
+                  title="Cambiar pieza seleccionada"
+                >
+                  <ng-icon name="lucideX" class="text-sm" />
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="relative">
+              <div class="relative">
+                <ng-icon
+                  name="lucideSearch"
+                  class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"
+                />
+                <input
+                  type="text"
+                  hlmInput
+                  placeholder="Buscar pieza por número de referencia o palabras clave..."
+                  [ngModel]="piezaSearchQuery()"
+                  (ngModelChange)="onSearchPiezasInput($event)"
+                  name="piezaSearch"
+                  autocomplete="off"
+                  class="w-full pl-9 pr-8 text-xs"
+                />
+                @if (isSearchingPieces()) {
+                  <ng-icon
+                    name="lucideLoader2"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm animate-spin"
+                  />
+                }
+              </div>
+
+              <!-- Sugerencias autocompletadas -->
+              @if (showSuggestions() && pieceSuggestions().length > 0) {
+                <div
+                  class="absolute left-0 right-0 top-full mt-1.5 z-20 max-h-48 overflow-y-auto rounded-xl bg-card border border-border shadow-xl p-1 space-y-1"
+                >
+                  @for (p of pieceSuggestions(); track p.id) {
+                    <button
+                      type="button"
+                      (click)="selectPieza(p)"
+                      class="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-accent/50 flex items-center justify-between transition-colors group"
+                    >
+                      <div class="flex items-center gap-2 overflow-hidden pr-2">
+                        <span class="font-bold text-primary shrink-0">#{{ p.ref }}</span>
+                        <span class="truncate text-foreground group-hover:text-primary transition-colors">
+                          {{ p.descripcion || 'Sin descripción' }}
+                        </span>
+                      </div>
+                      <span
+                        class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0"
+                      >
+                        {{ p.estado || 'Catálogo' }}
+                      </span>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- 2. Concepto / Descripción rápida -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Concepto / Descripción <span class="text-destructive">*</span>
+          </label>
+          <input
+            type="text"
+            hlmInput
+            placeholder="Ej: Enfilado collar, arreglo de cierre, pulido..."
+            [ngModel]="descripcion()"
+            (ngModelChange)="descripcion.set($event)"
+            name="descripcion"
+            required
+            class="w-full text-xs"
+          />
+
+          <!-- Botones de conceptos rápidos -->
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            <span class="text-[10px] text-muted-foreground self-center mr-1">Rápidos:</span>
+            @for (concept of quickConcepts; track concept) {
+              <button
+                type="button"
+                (click)="applyConcept(concept)"
+                class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border/40 hover:border-primary/30 transition-all"
+              >
+                {{ concept }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- 3. Importe (€) y Fecha de Gasto -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Importe (€) <span class="text-destructive">*</span>
+            </label>
+            <div class="relative">
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                hlmInput
+                placeholder="0.00"
+                [ngModel]="importe()"
+                (ngModelChange)="importe.set($event)"
+                name="importe"
+                required
+                class="w-full pr-7 font-mono text-xs font-medium"
+              />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+                €
+              </span>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Fecha del Gasto <span class="text-destructive">*</span>
+            </label>
+            <input
+              type="date"
+              hlmInput
+              [ngModel]="fechaGasto()"
+              (ngModelChange)="fechaGasto.set($event)"
+              name="fechaGasto"
+              required
+              class="w-full text-xs"
+            />
+          </div>
+        </div>
+
+        <!-- 4. Fecha de Pago (Control de Estado Pendiente vs Pagado) -->
+        <div class="p-3.5 rounded-xl bg-muted/30 border border-border/70 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Fecha de Liquidación / Pago
+            </label>
+
+            @if (fechaPago()) {
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+              >
+                <ng-icon name="lucideCheck" class="text-xs" />
+                Pagado
+              </span>
+            } @else {
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+              >
+                Pendiente de pago
+              </span>
+            }
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input
+              type="date"
+              hlmInput
+              [ngModel]="fechaPago()"
+              (ngModelChange)="fechaPago.set($event)"
+              name="fechaPago"
+              class="w-full text-xs"
+            />
+
+            <button
+              type="button"
+              hlmBtn
+              variant="outline"
+              size="sm"
+              (click)="setFechaPagoHoy()"
+              class="text-xs shrink-0"
+              title="Establecer hoy como fecha de liquidación"
+            >
+              Hoy
+            </button>
+
+            @if (fechaPago()) {
+              <button
+                type="button"
+                hlmBtn
+                variant="ghost"
+                size="sm"
+                (click)="clearFechaPago()"
+                class="text-xs text-muted-foreground hover:text-destructive shrink-0"
+                title="Quitar fecha y volver a Pendiente"
+              >
+                Dejar pendiente
+              </button>
+            }
+          </div>
+          <p class="text-[11px] text-muted-foreground">
+            Si se indica fecha, el gasto se contabilizará automáticamente como liquidado/pagado.
+          </p>
+        </div>
+
+        <!-- 5. Comentarios u Observaciones -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Comentarios / Taller (Opcional)
+          </label>
+          <textarea
+            rows="2"
+            hlmInput
+            placeholder="Detalles sobre el joyero, taller, número de factura o intervención..."
+            [ngModel]="comentarios()"
+            (ngModelChange)="comentarios.set($event)"
+            name="comentarios"
+            class="w-full text-xs resize-none"
+          ></textarea>
+        </div>
+
+        <!-- Footer / Acciones -->
+        <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-border/50">
+          <button
+            type="button"
+            hlmBtn
+            variant="ghost"
+            (click)="close()"
+            [disabled]="isSubmitting()"
+            class="text-xs"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            hlmBtn
+            variant="default"
+            [disabled]="isSubmitting()"
+            class="text-xs font-semibold min-w-28"
+          >
+            @if (isSubmitting()) {
+              <ng-icon name="lucideLoader2" class="text-sm mr-1.5 animate-spin" />
+              <span>Guardando...</span>
+            } @else {
+              <span>{{ isEditMode() ? 'Actualizar Gasto' : 'Guardar Gasto' }}</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

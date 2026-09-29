@@ -24,7 +24,7 @@ Este documento establece las políticas de control de acceso basadas en roles (R
 | **`gastos_extra`**| List / View | ✅ | ✅ | Ambos pueden consultar los gastos asociados a las piezas. |
 | | Create | ✅ | ✅ | Ambos pueden registrar nuevos gastos extra derivados de una pieza. |
 | | Update | ✅ | ✅ | Ambos pueden corregir o actualizar gastos registrados. |
-| | Delete | ✅ | ❌ | Solo Admin puede eliminar registros de gastos. |
+| | Delete | ✅ | ✅ | Ambos pueden eliminar registros de gastos. |
 
 ---
 

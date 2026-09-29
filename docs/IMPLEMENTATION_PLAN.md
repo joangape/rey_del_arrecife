@@ -19,7 +19,7 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
 [Fase 4: Módulo de Inventario (Catálogo & Ficha Comercial)] ✅ COMPLETADO
                │
                ▼
-[Fase 5: Módulo de Gastos Extra & Liquidaciones]
+[Fase 5: Módulo de Gastos Extra & Liquidaciones] ✅ COMPLETADO
                │
                ▼
 [Fase 6: Portal de Administración de Usuarios & Invitaciones]
@@ -129,14 +129,34 @@ Este documento es el mapa de ruta (*living roadmap*) del proyecto. Registra las 
 ## 📌 Fase 5: Módulo de Gastos Extra & Liquidaciones
 > **Objetivo**: Controlar las intervenciones, arreglos, enfilados y liquidaciones de las piezas.
 
-- [ ] **5.1 Lista General de Gastos (`/gastos`)**:
-  - [ ] Tabla de gastos con filtros por fecha de gasto, fecha de pago y pieza asociada.
-  - [ ] Indicador de estado de pago del gasto (Pendiente vs Pagado).
-- [ ] **5.2 Alta y Edición de Gasto Extra**:
-  - [ ] Diálogo modal (Spartan Dialog) para registrar un gasto vinculado a una `ref` de pieza.
-  - [ ] Autocompletado del selector de pieza por número de referencia o descripción.
-- [ ] **5.3 Recálculo Automático**:
-  - [ ] Actualización en tiempo real del sumatorio de gastos (`gastos_total`) en la ficha de inventario.
+- [x] **5.1 Backend & Permisos RBAC en PocketBase**:
+  - [x] Actualización de la regla `deleteRule` en `gastos_extra` (`@request.auth.id != ""`) permitiendo a los colaboradores (`partner`) eliminar gastos.
+  - [x] Migración automatizada `1790541700_update_gastos_delete_rule.js` sincronizada en backend y deploy, y reflejada en `docs/PERMISSIONS_MATRIX.md`.
+- [x] **5.2 Servicio Reactivo `GastosService` (`src/app/core/services/gastos.service.ts`)**:
+  - [x] Estado reactivo completo con Angular Signals (`gastos`, `totalItems`, `page`, `perPage`, `searchQuery`, `statusFilter`).
+  - [x] Métricas KPI calculadas computadas (`totalGastos`, `totalPagado`, `totalPendiente`, `countPendientes`, `countPagados`).
+  - [x] CRUD reactivo completo (`createGasto`, `updateGasto`, `deleteGasto`, `getGastosByPieza`).
+  - [x] Buscador predictivo de piezas (`searchPiezas`) para autocompletado interactivo en formularios.
+  - [x] Suite de pruebas unitarias (`gastos.service.spec.ts`) al 100%.
+- [x] **5.3 Modal de Alta y Edición (`GastoFormDialogComponent`)**:
+  - [x] Diálogo modal estilizado con Spartan UI y tokens de diseño (*Deep Marine* / *Clean Marine*).
+  - [x] Selector autocompletado de piezas con sugerencias dinámicas (Ref, descripción, estado) o fijación automática si se abre desde la ficha.
+  - [x] Conceptos rápidos de un clic (*Enfilado*, *Arreglo*, *Limpieza y pulido*, *Tasación*, etc.).
+  - [x] Control del estado de pago mediante selector de fecha de liquidación con botón rápido de fecha actual.
+  - [x] Validación reactiva y gestión de errores.
+  - [x] Suite de pruebas unitarias (`gasto-form-dialog.component.spec.ts`) al 100%.
+- [x] **5.4 Pantalla General de Gastos (`/gastos`)**:
+  - [x] 3 Tarjetas KPI superiores: Total Gastos (€), Total Pagado (€), Total Pendiente de Pago (€ y nº de pendientes).
+  - [x] Pestañas de estado de pago: *Todos los gastos*, *Pendientes de pago* y *Pagados / Liquidados* con badges numéricos.
+  - [x] Buscador textual por Ref. de pieza (#42), concepto o comentarios, y filtro de rango de fechas de gasto.
+  - [x] Tabla interactiva (Spartan Table) con ordenación, miniaturas de piezas vinculadas y badges de estado esmeralda / ámbar.
+  - [x] Paginación dinámica y diálogo modal de confirmación de borrado (`HlmAlertDialog`).
+  - [x] Suite de pruebas unitarias (`gastos-list.component.spec.ts`) al 100%.
+- [x] **5.5 Integración en Ficha de Inventario (`/inventario/:id`)**:
+  - [x] Botón directo `+ Añadir Gasto` en la sección de intervenciones con preselección automática de la pieza actual.
+  - [x] Botones de acción en cada fila de la tabla de gastos (Editar y Eliminar con diálogo de confirmación).
+  - [x] Recálculo inmediato reactivo de `totalGastosExtra()`, `costeTotal()`, `margenBruto()` y `beneficioNeto()`.
+  - [x] Suite de pruebas unitarias actualizada (`inventario-detail.component.spec.ts`) al 100%.
 
 ---
 
