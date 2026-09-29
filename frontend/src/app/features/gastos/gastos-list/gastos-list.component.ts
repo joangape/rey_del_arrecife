@@ -219,9 +219,6 @@ export class GastosListComponent {
     if (piece.fotos && piece.fotos.length > 0) {
       return this.pbService.getFileUrl(piece, piece.fotos[0], { thumb: '80x80' });
     }
-    if (piece.foto_url && piece.foto_url.trim().length > 0) {
-      return piece.foto_url;
-    }
     return null;
   }
 }

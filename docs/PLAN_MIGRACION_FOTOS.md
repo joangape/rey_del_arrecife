@@ -120,6 +120,6 @@ Eliminar todos los elementos y referencias a Google Photos en la aplicación Ang
 - [x] Generación y verificación de miniaturas automáticas PocketBase (`100x100`).
 - [ ] Navegación en `/inventario`: todas las filas de la tabla muestran su miniatura correctamente.
 - [ ] Navegación en `/inventario/:id`: visor de imágenes carga fotos locales nítidas en alta resolución y el Lightbox abre sin fallos.
-- [ ] Eliminación completa de enlaces rotos de Google Photos en frontend.
-- [ ] Pruebas unitarias de frontend (`npm run test`) y backend (`npm test`) pasando al 100%.
+- [x] Eliminación completa de enlaces rotos de Google Photos en frontend.
+- [x] Pruebas unitarias de frontend (`npm test` con 171 tests) y backend (`npm test` con 29 tests) pasando al 100%.
 - [ ] Documentación técnica actualizada.

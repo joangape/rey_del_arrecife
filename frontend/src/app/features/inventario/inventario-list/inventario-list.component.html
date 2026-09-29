@@ -333,16 +333,6 @@
                         class="size-9 rounded-md object-cover border border-border mx-auto shadow-2xs"
                         loading="lazy"
                       />
-                    } @else if (item.foto_url) {
-                      <a
-                        [href]="item.foto_url"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="size-9 rounded-md bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto hover:bg-primary/20 transition-colors"
-                        title="Ver fotografía externa"
-                      >
-                        <ng-icon name="lucideExternalLink" class="size-3.5" />
-                      </a>
                     } @else {
                       <div
                         class="size-9 rounded-md bg-muted/40 border border-border/50 text-muted-foreground flex items-center justify-center mx-auto"
@@ -544,20 +534,6 @@
                 </div>
 
                 <div class="flex items-center gap-1.5">
-                  @if (item.foto_url) {
-                    <a
-                      [href]="item.foto_url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      hlmBtn
-                      variant="ghost"
-                      size="sm"
-                      class="size-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
-                      title="Abrir fotografía externa"
-                    >
-                      <ng-icon name="lucideExternalLink" class="size-3.5" />
-                    </a>
-                  }
                   <a
                     hlmBtn
                     variant="outline"

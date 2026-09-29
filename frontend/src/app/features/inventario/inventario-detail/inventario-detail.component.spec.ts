@@ -166,7 +166,6 @@ describe('InventarioDetailComponent', () => {
     expect(component.itemForm.get('costo')?.disabled).toBe(true);
     expect(component.itemForm.get('origen')?.disabled).toBe(true);
     expect(component.itemForm.get('descripcion')?.disabled).toBe(true);
-    expect(component.itemForm.get('foto_url')?.disabled).toBe(true);
 
     // Commercial fields must remain enabled
     expect(component.itemForm.get('pvp')?.disabled).toBe(false);

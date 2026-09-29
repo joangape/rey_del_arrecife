@@ -274,7 +274,7 @@ export class InventarioService {
   }
 
   /**
-   * Determina si el artículo cuenta con un enlace externo de fotografía (ej. Google Photos).
+   * @deprecated Campo histórico en desuso tras migración de imágenes a PocketBase.
    */
   hasExternalPhoto(item: InventarioItem): boolean {
     return !!(item.foto_url && item.foto_url.trim().startsWith('http'));

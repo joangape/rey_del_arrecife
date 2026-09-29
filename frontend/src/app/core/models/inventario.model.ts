@@ -20,6 +20,7 @@ export interface InventarioItem {
   fecha_venta?: string;
   fecha_pagado?: string;
   estado?: InventarioEstado;
+  /** @deprecated Campo de archivo histórico en desuso tras migración a PocketBase */
   foto_url?: string;
   fotos?: string[];
   comentarios?: string;

@@ -16,7 +16,6 @@ import {
   lucideCalendar,
   lucideCheck,
   lucideCoins,
-  lucideExternalLink,
   lucideEye,
   lucideFileText,
   lucideImage,
@@ -53,7 +52,7 @@ import { GastoFormDialogComponent } from '../../gastos/gasto-form-dialog/gasto-f
 export interface PhotoDisplayItem {
   id: string;
   url: string;
-  source: 'pocketbase' | 'external';
+  source: 'pocketbase';
   filename?: string;
 }
 
@@ -80,7 +79,6 @@ export interface PhotoDisplayItem {
       lucideTrash2,
       lucidePencil,
       lucideLock,
-      lucideExternalLink,
       lucideImage,
       lucideUploadCloud,
       lucidePlus,
@@ -142,6 +140,12 @@ export class InventarioDetailComponent implements OnInit {
 
   // Galería de fotos
   readonly selectedPhoto = signal<PhotoDisplayItem | null>(null);
+  readonly selectedPhotoIndex = computed(() => {
+    const sel = this.selectedPhoto();
+    if (!sel) return 0;
+    const idx = this.allPhotos().findIndex((p) => p.id === sel.id);
+    return idx >= 0 ? idx : 0;
+  });
   readonly isLightboxOpen = signal<boolean>(false);
 
   // Permisos computados
@@ -168,7 +172,6 @@ export class InventarioDetailComponent implements OnInit {
     origen: [{ value: '', disabled: true }],
     fecha_compra: [{ value: '', disabled: true }],
     costo: [{ value: 0, disabled: true }],
-    foto_url: [{ value: '', disabled: true }],
 
     // Campos comerciales (editables por Admin y Partner)
     pvp: [null],
@@ -179,35 +182,17 @@ export class InventarioDetailComponent implements OnInit {
     comentarios: [''],
   });
 
-  // Lista unificada de fotos (PocketBase + enlace externo)
+  // Lista unificada de fotos (PocketBase)
   readonly allPhotos = computed<PhotoDisplayItem[]>(() => {
     const it = this.item();
-    if (!it) return [];
+    if (!it || !it.fotos || it.fotos.length === 0) return [];
 
-    const list: PhotoDisplayItem[] = [];
-
-    // Fotos subidas a PocketBase
-    if (it.fotos && it.fotos.length > 0) {
-      for (const filename of it.fotos) {
-        list.push({
-          id: filename,
-          url: this.inventarioService.getItemThumbnail(it) ? this.getPbFullUrl(it, filename) : '',
-          source: 'pocketbase',
-          filename,
-        });
-      }
-    }
-
-    // Foto externa de Google Photos / URL
-    if (it.foto_url && it.foto_url.trim().startsWith('http')) {
-      list.push({
-        id: 'external_url',
-        url: it.foto_url.trim(),
-        source: 'external',
-      });
-    }
-
-    return list;
+    return it.fotos.map((filename) => ({
+      id: filename,
+      url: this.getPbFullUrl(it, filename),
+      source: 'pocketbase' as const,
+      filename,
+    }));
   });
 
   // Cálculos financieros derivados
@@ -311,7 +296,7 @@ export class InventarioDetailComponent implements OnInit {
     const admin = this.isAdmin();
 
     // Habilitar o deshabilitar campos de Admin según rol
-    const adminFields = ['ref', 'descripcion', 'origen', 'fecha_compra', 'costo', 'foto_url'];
+    const adminFields = ['ref', 'descripcion', 'origen', 'fecha_compra', 'costo'];
     for (const field of adminFields) {
       const control = this.itemForm.get(field);
       if (admin) {
@@ -327,7 +312,6 @@ export class InventarioDetailComponent implements OnInit {
       origen: it.origen ?? '',
       fecha_compra: this.formatDateForInput(it.fecha_compra),
       costo: it.costo ?? 0,
-      foto_url: it.foto_url ?? '',
       pvp: it.pvp ?? null,
       a_pagar: it.a_pagar ?? null,
       estado: it.estado ?? '',
@@ -368,7 +352,6 @@ export class InventarioDetailComponent implements OnInit {
           origen: formVal.origen?.trim() || '',
           fecha_compra: formVal.fecha_compra || null,
           costo: Number(formVal.costo) || 0,
-          foto_url: formVal.foto_url?.trim() || '',
           pvp: formVal.pvp != null && formVal.pvp !== '' ? Number(formVal.pvp) : undefined,
           a_pagar:
             formVal.a_pagar != null && formVal.a_pagar !== ''
