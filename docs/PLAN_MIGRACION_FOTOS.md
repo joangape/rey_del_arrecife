@@ -115,8 +115,9 @@ Eliminar todos los elementos y referencias a Google Photos en la aplicación Ang
 ---
 
 ## 3. Checklist de Verificación y Validación
-- [ ] Ejecución exitosa de `sync_google_photos.js` con las 300 piezas procesadas.
-- [ ] Directorio `backend/data/photos/` poblado con copias locales `ref_*.jpg`.
+- [x] Ejecución exitosa de `sync_google_photos.js` con las 300 piezas procesadas (293 descargadas con éxito, 7 enlaces origen rotos/vacíos).
+- [x] Directorio `backend/data/photos/` poblado con copias locales `ref_*.jpg`.
+- [x] Generación y verificación de miniaturas automáticas PocketBase (`100x100`).
 - [ ] Navegación en `/inventario`: todas las filas de la tabla muestran su miniatura correctamente.
 - [ ] Navegación en `/inventario/:id`: visor de imágenes carga fotos locales nítidas en alta resolución y el Lightbox abre sin fallos.
 - [ ] Eliminación completa de enlaces rotos de Google Photos en frontend.

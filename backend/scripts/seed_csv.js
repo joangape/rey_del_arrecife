@@ -118,7 +118,7 @@ async function ensureSchema() {
                 { name: 'fecha_pagado', type: 'text', required: false },
                 { name: 'estado', type: 'text', required: false },
                 { name: 'foto_url', type: 'url', required: false },
-                { name: 'fotos', type: 'file', maxSelect: 10, required: false },
+                { name: 'fotos', type: 'file', maxSelect: 10, required: false, thumbs: ['100x100'] },
                 { name: 'comentarios', type: 'text', required: false },
             ],
             indexes: ['CREATE UNIQUE INDEX idx_inventario_ref ON inventario (ref)'],

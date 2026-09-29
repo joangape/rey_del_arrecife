@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "seed": "node scripts/seed_csv.js",
+    "sync:photos": "node scripts/sync_google_photos.js",
     "test:auth": "node tests/auth_whitelist.test.js",
     "test:guard": "node tests/inventory_guard.test.js",
     "test:users": "node tests/user_guard.test.js",

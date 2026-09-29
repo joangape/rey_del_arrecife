@@ -22,10 +22,12 @@ deploy/.env
 .DS_Store
 Thumbs.db
 
-# Logs
+# Logs & sync data
 *.log
 npm-debug.log*
 yarn-debug.log*
+backend/logs/
+backend/data/photos/
 
 # IDE
 .idea/
