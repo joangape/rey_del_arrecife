@@ -138,6 +138,15 @@ async function runTests() {
         assert.strictEqual(check.totalItems, 0);
     });
 
+    await test('Admin puede subir y gestionar archivos locales en el campo "fotos"', async () => {
+        const form = new FormData();
+        const dummyBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46]);
+        form.append('fotos', new Blob([dummyBuffer], { type: 'image/jpeg' }), 'test_pieza.jpg');
+
+        const updated = await adminPb.collection('inventario').update(testItem.id, form);
+        assert.ok(Array.isArray(updated.fotos) && updated.fotos.length > 0, 'Se esperaba al menos un archivo en fotos');
+    });
+
     // -------------------------------------------------------------
     // PRUEBAS DE PARTNER - OPERACIONES PERMITIDAS
     // -------------------------------------------------------------
@@ -167,6 +176,18 @@ async function runTests() {
         });
         assert.strictEqual(updated.pvp, 900);
         assert.strictEqual(updated.costo, 400);
+    });
+
+    await test('Partner actualiza campos comerciales manteniendo fotos locales intactas', async () => {
+        const itemBefore = await superPb.collection('inventario').getOne(testItem.id);
+        const originalFotos = [...(itemBefore.fotos || [])];
+
+        const updated = await partnerPb.collection('inventario').update(testItem.id, {
+            pvp: 920,
+            comentarios: 'Comentario comercial de socio preservando fotos',
+        });
+        assert.strictEqual(updated.pvp, 920);
+        assert.deepStrictEqual(updated.fotos, originalFotos);
     });
 
     // -------------------------------------------------------------
@@ -268,6 +289,20 @@ async function runTests() {
         assert.ok(errorCaught, 'Se esperaba un error al intentar modificar foto_url');
         assert.strictEqual(errorCaught.status, 403);
         assert.ok(errorCaught.message.includes('foto_url'));
+    });
+
+    await test('Partner NO puede alterar el campo "fotos"', async () => {
+        let errorCaught = null;
+        try {
+            await partnerPb.collection('inventario').update(testItem.id, {
+                fotos: ['hack_foto.jpg'],
+            });
+        } catch (err) {
+            errorCaught = err;
+        }
+        assert.ok(errorCaught, 'Se esperaba un error al intentar modificar fotos');
+        assert.strictEqual(errorCaught.status, 403);
+        assert.ok(errorCaught.message.includes('fotos'));
     });
 
     await test('Partner NO puede dar de alta nuevas piezas (Create bloqueado)', async () => {

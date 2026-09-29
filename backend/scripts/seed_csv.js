@@ -129,6 +129,23 @@ async function ensureSchema() {
             deleteRule: '@request.auth.role = "admin"',
         });
         console.log('✅ Colección `inventario` creada.');
+    } else {
+        const existingInvFields = inv.fields.map(f => f.name);
+        let invModified = false;
+        if (!existingInvFields.includes('fotos')) {
+            inv.fields.push({
+                name: 'fotos',
+                type: 'file',
+                maxSelect: 10,
+                required: false,
+                thumbs: ['100x100'],
+            });
+            invModified = true;
+        }
+        if (invModified) {
+            await pb.collections.update('inventario', inv);
+            console.log('✅ Colección `inventario` actualizada con campo `fotos`.');
+        }
     }
 
     // 3. gastos_extra
@@ -235,7 +252,15 @@ async function main() {
         try {
             const existing = await pb.collection('inventario').getFirstListItem(`ref = ${refNum}`).catch(() => null);
             if (existing) {
-                await pb.collection('inventario').update(existing.id, data);
+                // Preservar fotos locales migradas:
+                // No incluir 'fotos' en payload de actualización para evitar sobreescritura o borrado accidental
+                const updatePayload = { ...data };
+                delete updatePayload.fotos;
+                // Si la pieza ya tiene fotos en PocketBase y el CSV no aporta url, conservar foto_url existente
+                if (existing.fotos && existing.fotos.length > 0 && !updatePayload.foto_url) {
+                    updatePayload.foto_url = existing.foto_url;
+                }
+                await pb.collection('inventario').update(existing.id, updatePayload);
                 refToRecordId.set(refNum, existing.id);
             } else {
                 const created = await pb.collection('inventario').create(data);
